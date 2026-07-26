@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ATZ Planung">
+<meta name="theme-color" content="#003b6e">
+<title>ATZ Planung</title>
+<style>
+  :root {
+    --tk: #e20074;
+    --dk: #003b6e;
+    --dk2: #0059a7;
+    --ok: #1a7f37;
+    --warn: #9a6700;
+    --err: #cf222e;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --border: #e0e0e0;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --nav-h: 56px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
+         background: var(--bg); color: var(--text); font-size: 15px; overflow-x: hidden; }
+
+  /* ── Navigation ── */
+  nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+        background: rgba(255,255,255,.92); backdrop-filter: saturate(180%) blur(20px);
+        border-top: 1px solid var(--border);
+        padding-bottom: var(--safe-b);
+        display: flex; }
+  nav button { flex: 1; border: none; background: none; padding: 7px 1px 3px;
+               cursor: pointer; display: flex; flex-direction: column; align-items: center;
+               gap: 2px; font-size: 9px; color: var(--muted); transition: color .15s; }
+  nav button.active { color: var(--dk2); }
+  nav button svg { width: 24px; height: 24px; stroke: currentColor; fill: none;
+                   stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* ── Scroll area ── */
+  .page { display: none; min-height: 100dvh; padding: 0 0 calc(var(--nav-h) + var(--safe-b) + 8px); }
+  .page.active { display: block; }
+  .scroll { padding: 16px 16px 0; }
+
+  /* ── Header ── */
+  .page-hdr { background: linear-gradient(135deg, var(--dk) 0%, var(--dk2) 100%);
+              color: #fff; padding: 52px 20px 20px; }
+  .page-hdr h1 { font-size: 22px; font-weight: 700; }
+  .page-hdr p  { font-size: 13px; opacity: .8; margin-top: 3px; }
+
+  /* ── Cards ── */
+  .card { background: var(--card); border-radius: 14px; padding: 16px;
+          margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted);
+                text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+
+  /* ── KPI grid ── */
+  .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .kpi { background: var(--card); border-radius: 14px; padding: 14px 12px;
+         box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .kpi-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; line-height: 1.3; }
+  .kpi-value { font-size: 20px; font-weight: 700; color: var(--dk); line-height: 1.1; }
+  .kpi-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .kpi.accent .kpi-value { color: var(--tk); }
+  .kpi.green  .kpi-value { color: var(--ok); }
+
+  /* ── Status badge ── */
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 20px;
+           font-size: 12px; font-weight: 600; }
+  .badge-ok   { background: #dafbe1; color: var(--ok); }
+  .badge-warn { background: #fff8c5; color: var(--warn); }
+  .badge-err  { background: #ffebe9; color: var(--err); }
+  .badge-info { background: #ddf4ff; color: var(--dk2); }
+
+  /* ── Tables ── */
+  .tbl-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -16px;
+              padding: 0 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 320px; }
+  th { background: #e8eef4; color: var(--dk); font-weight: 600; padding: 7px 8px;
+       text-align: left; font-size: 12px; white-space: nowrap; }
+  td { padding: 6px 8px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bold { font-weight: 700; }
+  .muted { color: var(--muted); font-size: 12px; }
+
+  /* ── Alert blocks ── */
+  .alert { border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; font-size: 13px; }
+  .alert-warn { background: #fff8c5; border-left: 4px solid var(--warn); }
+  .alert-info  { background: #ddf4ff; border-left: 4px solid var(--dk2); }
+  .alert-ok    { background: #dafbe1; border-left: 4px solid var(--ok); }
+  .alert strong { display: block; margin-bottom: 4px; font-size: 13px; }
+
+  /* ── Timeline ── */
+  .timeline { list-style: none; padding: 0; }
+  .timeline li { display: flex; gap: 12px; padding-bottom: 16px; }
+  .tl-dot { width: 36px; min-width: 36px; display: flex; flex-direction: column; align-items: center; }
+  .tl-dot span { width: 12px; height: 12px; border-radius: 50%; background: var(--dk2); flex-shrink: 0; margin-top: 3px; }
+  .tl-dot::after { content:''; width: 2px; flex: 1; background: #d0d5dd; margin-top: 4px; }
+  .timeline li:last-child .tl-dot::after { display: none; }
+  .tl-dot.done span { background: var(--ok); }
+  .tl-dot.active span { background: var(--tk); box-shadow: 0 0 0 4px rgba(226,0,116,.2); }
+  .tl-content { flex: 1; padding-bottom: 4px; }
+  .tl-date { font-size: 12px; color: var(--muted); font-weight: 500; }
+  .tl-title { font-size: 15px; font-weight: 600; line-height: 1.3; }
+  .tl-body { font-size: 13px; color: #444; margin-top: 4px; }
+
+  /* ── Todo ── */
+  .todo-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-check { width: 22px; min-width: 22px; height: 22px; border-radius: 50%;
+                border: 2px solid var(--border); background: #fff; flex-shrink: 0;
+                margin-top: 1px; display: flex; align-items: center; justify-content: center;
+                cursor: pointer; transition: all .2s; }
+  .todo-check.done { background: var(--ok); border-color: var(--ok); }
+  .todo-check.done::after { content: '✓'; color: #fff; font-size: 13px; font-weight: 700; }
+  .todo-item.done-item .todo-text strong { text-decoration: line-through; color: var(--muted); }
+  .todo-item.done-item .todo-text span { color: #aaa; }
+  .todo-text { flex: 1; }
+  .todo-text strong { display: block; font-size: 14px; line-height: 1.3; }
+  .todo-text span { font-size: 12px; color: var(--muted); display: block; margin-top: 2px; }
+  .todo-date { font-size: 11px; color: var(--warn); font-weight: 600; margin-top: 3px; display: block; }
+
+  /* ── Section ── */
+  .section-title { font-size: 20px; font-weight: 700; color: var(--dk); margin: 20px 0 10px; }
+  .row { display: flex; justify-content: space-between; align-items: baseline;
+         padding: 7px 0; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+  .row:last-child { border-bottom: none; }
+  .row .val { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ── Scenario pills ── */
+  .scenario-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .stab { flex: 1; text-align: center; padding: 7px 4px; border-radius: 10px;
+          border: 1.5px solid var(--border); font-size: 13px; font-weight: 500;
+          cursor: pointer; color: var(--muted); background: var(--card); transition: all .15s; }
+  .stab.active { background: var(--dk2); color: #fff; border-color: var(--dk2); }
+
+  /* ── Collapsibles ── */
+  details { margin-bottom: 10px; }
+  summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; padding: 13px 16px; background: var(--card); border-radius: 12px;
+            font-size: 15px; font-weight: 600; color: var(--dk); box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: '›'; font-size: 20px; color: var(--muted); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(90deg); }
+  details[open] summary { border-radius: 12px 12px 0 0; }
+  .details-body { background: var(--card); border-radius: 0 0 12px 12px;
+                  padding: 12px 16px 16px; box-shadow: 0 2px 4px rgba(0,0,0,.06); margin-bottom: 12px; }
+
+  /* ── Contact card ── */
+  .contact { display: flex; gap: 12px; align-items: center; padding: 10px 0; }
+  .contact-icon { width: 40px; height: 40px; border-radius: 50%; background: var(--dk2);
+                  display: flex; align-items: center; justify-content: center; color: #fff;
+                  font-size: 18px; flex-shrink: 0; }
+  .contact-info strong { display: block; font-size: 14px; }
+  .contact-info span { font-size: 12px; color: var(--muted); }
+  .contact-info a { font-size: 12px; color: var(--dk2); text-decoration: none; display: block; }
+
+  /* ── Formula ── */
+  .formula { background: #f0f4f8; border-radius: 10px; padding: 10px 14px;
+             font-family: "Courier New", monospace; font-size: 13px; color: var(--dk);
+             margin: 8px 0; overflow-x: auto; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 1: ÜBERSICHT
+══════════════════════════════════════════════════ -->
+<div id="p-overview" class="page active">
+  <div class="page-hdr">
+    <h1>ATZ Planung</h1>
+    <p>Stand: 26.07.2026 · Dr. Steffen Steinhäuser</p>
+  </div>
+  <div class="scroll">
+
+    <div class="alert alert-ok" style="margin-top:12px;">
+      <strong>✅ ATZ-Antrag genehmigt</strong>
+      FK + HR, 15.07.2026 · Vertrag kommt postalisch vor 01.12.2026
+    </div>
+
+    <!-- KPI Grid -->
+    <div class="kpi-grid">
+      <div class="kpi">
+        <div class="kpi-label">ATZ-Beginn</div>
+        <div class="kpi-value">01.12.2026</div>
+        <div class="kpi-sub">Blockmodell AT3</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">ATZ-Ende / Rente</div>
+        <div class="kpi-value">01.12.2034</div>
+        <div class="kpi-sub">−3 % Abschlag, dauerhaft</div>
+      </div>
+      <div class="kpi accent">
+        <div class="kpi-label">Netto ATZ (monatl.)</div>
+        <div class="kpi-value">5.512 €</div>
+        <div class="kpi-sub">inkl. Aufstockung 1.625 €</div>
+      </div>
+      <div class="kpi green">
+        <div class="kpi-label">Netto Rente Basis</div>
+        <div class="kpi-value">5.909 €</div>
+        <div class="kpi-sub">mit bAV + Kapital 2.000 €</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">DRV brutto (ab 12/2034)</div>
+        <div class="kpi-value">3.102 €</div>
+        <div class="kpi-sub">laut DRV-ATZ-Sim. 13.07.2026</div>
+      </div>
+      <div class="kpi">
+        <div class="kpi-label">Portfolio (06/2026)</div>
+        <div class="kpi-value">353 T€</div>
+        <div class="kpi-sub">Ziel 2035: ~629 T€</div>
+      </div>
+    </div>
+
+    <!-- Phasen-Übersicht -->
+    <div class="card">
+      <div class="card-title">Lebensphasen</div>
+      <div class="row"><span>Vollzeit (bis 11/2026)</span><span class="val">5.958 € netto</span></div>
+      <div class="row"><span>ATZ aktiv (12/2026–11/2030)</span><span class="val">5.513 € netto</span></div>
+      <div class="row"><span>ATZ passiv (12/2030–11/2034)</span><span class="val">5.513 € netto</span></div>
+      <div class="row"><span style="color:var(--tk);font-weight:600;">Rente ab 12/2034 (Basis)</span><span class="val" style="color:var(--tk);">5.909 € netto</span></div>
+      <div class="row muted"><span><em>(Ref. abschlagsfrei ab 10/2035)</em></span><span class="val"><em>6.709 €</em></span></div>
+    </div>
+
+    <!-- Wichtige Risiken -->
+    <div class="alert alert-warn">
+      <strong>⚠️ Wichtig: Offene Punkte</strong>
+      Steuerberater konsultieren · Clerical Medical Modellrechnung für 12/2034 anfordern · Liquiditätsbedarf konkret ermitteln
+    </div>
+
+    <div class="card">
+      <div class="card-title">Aufstockungsstruktur (ATZ)</div>
+      <div class="row"><span>Brutto ATZ-Vergütung</span><span class="val">5.696,34 €</span></div>
+      <div class="row"><span>Netto ATZ (ohne Aufstockung)</span><span class="val">3.887,34 €</span></div>
+      <div class="row"><span>/611 FIX (gesetzl. Mindest, steuerfrei)</span><span class="val">911,41 €</span></div>
+      <div class="row"><span>/611 VAR (20 % × Variable, steuerfrei)</span><span class="val">227,85 €</span></div>
+      <div class="row"><span>/612 (tariflich, steuerfrei)</span><span class="val">485,91 €</span></div>
+      <div class="row"><span style="font-weight:700;">Gesamtaufstockung</span><span class="val" style="color:var(--ok);">1.625,18 €</span></div>
+      <div class="row"><span style="font-weight:700;">Nettogesamtbezüge ATZ</span><span class="val" style="color:var(--dk);font-size:16px;">5.512,51 €</span></div>
+    </div>
+
+  </div><!-- /scroll -->
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 2: FINANZEN
+══════════════════════════════════════════════════ -->
+<div id="p-finanzen" class="page">
+  <div class="page-hdr">
+    <h1>Finanzen</h1>
+    <p>Berechnungsmodell · Stand 26.07.2026</p>
+  </div>
+  <div class="scroll">
+
+    <!-- Szenario-Tabs -->
+    <div class="section-title">Rente ab 12/2034 (Netto/Monat)</div>
+    <div class="scenario-tabs" id="stabs">
+      <div class="stab active" onclick="setScenario('K')">Konservativ</div>
+      <div class="stab" onclick="setScenario('B')">Basis</div>
+      <div class="stab" onclick="setScenario('O')">Optimistisch</div>
+    </div>
+
+    <div class="card" id="scenario-card">
+      <div class="card-title" id="sc-title">Konservativ (f_DRV 0,78 | f_bAV 0,62 | f_KAP 0,72)</div>
+      <div class="row"><span>DRV netto (3.102 €)</span><span class="val" id="sc-drv">2.419,56 €</span></div>
+      <div class="row"><span>bAV netto (1.783,49 €)</span><span class="val" id="sc-bav">1.105,76 €</span></div>
+      <div class="row"><span>Kapital netto (2.000 €)</span><span class="val" id="sc-kap">1.440,00 €</span></div>
+      <div class="row"><span>Rürup netto</span><span class="val" id="sc-ruerup">112,32 €</span></div>
+      <div class="row"><span style="color:var(--muted);">+ Riester netto <em>(ab 10/2035)</em></span><span class="val" id="sc-riester" style="color:var(--muted);">97,50 €</span></div>
+      <div class="row" style="border-top:2px solid var(--dk);margin-top:4px;padding-top:8px;">
+        <span style="font-weight:700;font-size:15px;">Gesamt (ohne Riester)</span>
+        <span class="val" id="sc-total" style="font-size:18px;color:var(--dk);">5.077,64 €</span>
+      </div>
+      <div class="row"><span style="color:var(--muted);font-size:13px;">Mit Riester</span>
+        <span class="val" id="sc-total-r" style="color:var(--muted);font-size:13px;">5.175,14 €</span></div>
+    </div>
+
+    <details>
+      <summary>Referenz: Abschlagsfrei ab 10/2035</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:var(--muted);margin-bottom:8px;"><em>Informativ – tatsächlicher Rentenbeginn ist 12/2034 mit −3 % Abschlag (dauerhaft).</em></p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Stufe</th><th class="num">DRV netto</th><th class="num">Gesamt (m. Riester)</th></tr>
+          <tr><td>Konservativ</td><td class="num">3.065 €</td><td class="num">5.821 €</td></tr>
+          <tr><td>Basis</td><td class="num">3.301 €</td><td class="num">6.709 €</td></tr>
+          <tr><td>Optimistisch</td><td class="num">3.498 €</td><td class="num">7.337 €</td></tr>
+        </table>
+        </div>
+      </div>
+    </details>
+
+    <!-- Einkommensübersicht -->
+    <div class="section-title">Einkommensübersicht nach Phasen</div>
+    <div class="tbl-wrap" style="margin-bottom:12px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th><th class="num">Brutto</th><th class="num">Netto</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Vor ATZ (Fix)</td><td class="num">9.114 €</td><td class="num bold">5.958 €</td></tr>
+        <tr><td>Vor ATZ (Ziel 100 %)</td><td class="num">11.393 €</td><td class="num">~7.219 €</td></tr>
+        <tr><td>ATZ aktiv (12/26–11/30)</td><td class="num">5.696 €</td><td class="num bold">5.513 €</td></tr>
+        <tr><td>ATZ passiv (12/30–11/34)</td><td class="num">5.696 €</td><td class="num bold">5.513 €</td></tr>
+        <tr style="background:#e8f5e9;"><td><strong>Rente ab 12/2034 (Basis, m. bAV)</strong></td><td class="num bold">7.426 €</td><td class="num bold" style="color:var(--ok);">~5.909 €</td></tr>
+        <tr class="muted"><td><em>(Ref. abschlagsfrei, Basis)</em></td><td class="num"><em>8.379 €</em></td><td class="num"><em>6.709 €</em></td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <!-- Kapitalentnahme 5.5 -->
+    <details open>
+      <summary>Kapitalentnahme: Herleitung 2.000 €/Monat</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;margin-bottom:8px;">Ziel: Fixgehalt-Niveau (5.957,61 € netto) in der Rentenphase</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Quelle</th><th class="num">Netto</th></tr>
+          <tr><td>DRV Basis</td><td class="num">2.605,68 €</td></tr>
+          <tr><td>bAV Basis</td><td class="num">1.248,44 €</td></tr>
+          <tr><td>Rürup Basis</td><td class="num">454,44 €</td></tr>
+          <tr><td><strong>Summe ohne Kapital</strong></td><td class="num bold">4.308,56 €</td></tr>
+          <tr style="background:#fff8c5;"><td><strong>Finanzlücke zu Fixgehalt</strong></td><td class="num bold" style="color:var(--err);">−1.649 €</td></tr>
+          <tr style="background:#e8f5e9;"><td><strong>→ KAP_brutto (÷ 0,80)</strong></td><td class="num bold" style="color:var(--ok);">2.000 €</td></tr>
+          <tr><td><strong>→ KAP_netto</strong></td><td class="num bold">1.600 €</td></tr>
+        </table>
+        </div>
+        <div class="alert alert-info" style="margin-top:10px;">
+          <strong>💡 Entnahmerate am Rentenbeginn</strong>
+          2.000 €/Monat × 12 = 24.000 €/Jahr · Portfolio ~629.000 € (2035) → <strong>3,82 % p.a.</strong> (unter 4%-Regel ✓)
+        </div>
+      </div>
+    </details>
+
+    <!-- Nettofaktoren -->
+    <details>
+      <summary>Nettofaktoren (3 Stufen)</summary>
+      <div class="details-body">
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Stufe</th><th class="num">f_DRV/Rürup</th><th class="num">f_bAV</th><th class="num">f_KAP</th></tr></thead>
+          <tbody>
+            <tr><td>Konservativ</td><td class="num">0,78</td><td class="num">0,62</td><td class="num">0,72</td></tr>
+            <tr style="background:#e8f0f8;"><td><strong>Basis</strong></td><td class="num bold">0,84</td><td class="num bold">0,70</td><td class="num bold">0,80</td></tr>
+            <tr><td>Optimistisch</td><td class="num">0,89</td><td class="num">0,77</td><td class="num">0,90</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">Abgeleitete Faktoren: Fix 0,654 · Zielgehalt ~0,634 · ATZ-AN 0,682 · Steueranteil DRV 88 % (Kohorte 2034, § 22 Nr. 1 EStG)</p>
+      </div>
+    </details>
+
+    <!-- BMF Nebenrechnung -->
+    <details>
+      <summary>BMF-Nebenrechnung (1/12 Zielgehalt)</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;margin-bottom:8px;">Brutto 11.392,66 € · StKl III · KiSt EV NRW · freiwillig TKK</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><td>Brutto</td><td class="num">11.392,66 €</td></tr>
+          <tr><td>− Lohnsteuer</td><td class="num">2.354,66 €</td></tr>
+          <tr><td>− SolZ</td><td class="num">0,00 €</td></tr>
+          <tr><td>− KiSt (9 %)</td><td class="num">211,92 €</td></tr>
+          <tr><td>− RV (9,3 %)</td><td class="num">785,85 €</td></tr>
+          <tr><td>− AV (1,3 %)</td><td class="num">109,85 €</td></tr>
+          <tr><td>− KV ⚠️ (vereinfacht PKV=0)</td><td class="num">382,06 €</td></tr>
+          <tr><td>− PV (inkl. Kinderloszuschlag)</td><td class="num">209,25 €</td></tr>
+          <tr><td><strong>Netto (KV vereinfacht)</strong></td><td class="num bold">7.339,07 €</td></tr>
+          <tr style="background:#fff8c5;"><td>KV-Korrektur freiwillig TKK</td><td class="num" style="color:var(--err);">−120,44 €</td></tr>
+          <tr style="background:#e8f5e9;"><td><strong>Netto (KV korrigiert)</strong></td><td class="num bold" style="color:var(--ok);">~7.219 €</td></tr>
+        </table>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:8px;">Quelle: <a href="http://www.bmf-steuerrechner.de/interface/2026Version1.xhtml" style="color:var(--dk2);">BMF-Steuerrechner 2026</a></p>
+      </div>
+    </details>
+
+    <!-- Kapitalerhalt Abschnitt 15 -->
+    <details>
+      <summary>Kapitalerhalt: erforderliche Renditen</summary>
+      <div class="details-body">
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Zeitpunkt</th><th class="num">Entnahmerate</th><th class="num">+Inflation</th><th class="num">Gesamt</th></tr></thead>
+          <tbody>
+            <tr><td>Heute (353 T€)</td><td class="num">6,80 %</td><td class="num">2,20 %</td><td class="num bold">9,00 %</td></tr>
+            <tr style="background:#e8f0f8;"><td><strong>Rente 2035 (~629 T€)</strong></td><td class="num bold">3,82 %</td><td class="num">2,20 %</td><td class="num bold">6,02 %</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div class="alert alert-info" style="margin-top:10px;">
+          <strong>💡 Tagesgeldpuffer</strong>
+          72.000 € (= 3 Jahresbeiträge à 24.000 €). Schützt vor Zwangsverkäufen in Schwächephasen.
+        </div>
+      </div>
+    </details>
+
+    <!-- Szenarien -->
+    <details>
+      <summary>Szenariovergleich (Rente abschlagsfrei)</summary>
+      <div class="details-body">
+        <p style="font-size:12px;color:var(--muted);margin-bottom:8px;"><em>Hinweis: Bezieht sich auf Referenz ab 10/2035 (abschlagsfrei). Tatsächlicher Rentenbeginn ist 12/2034 mit −3 % Abschlag.</em></p>
+        <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Stufe</th><th class="num">Netto/Monat</th><th class="num">m. Riester</th></tr></thead>
+          <tbody>
+            <tr><td>Konservativ</td><td class="num">5.723 €</td><td class="num">5.821 €</td></tr>
+            <tr style="background:#e8f0f8;"><td><strong>Basis</strong></td><td class="num bold">6.604 €</td><td class="num bold">6.709 €</td></tr>
+            <tr><td>Optimistisch</td><td class="num">7.225 €</td><td class="num">7.337 €</td></tr>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 3: ZEITPLAN
+══════════════════════════════════════════════════ -->
+<div id="p-zeitplan" class="page">
+  <div class="page-hdr">
+    <h1>Zeitplan</h1>
+    <p>Meilensteine · Aktionen</p>
+  </div>
+  <div class="scroll" style="padding-top:16px;">
+
+    <ul class="timeline">
+      <li>
+        <div class="tl-dot done"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">15.07.2026 ✓</div>
+          <div class="tl-title">ATZ-Antrag genehmigt</div>
+          <div class="tl-body">Führungskraft + HR Deutsche Telekom · Antragsnummer: HRDE-1005499916 · Vertrag folgt postalisch</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot active"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">bis 01.12.2026</div>
+          <div class="tl-title">Vorbereitungen abschließen</div>
+          <div class="tl-body">ATZ-Vertrag prüfen · Benefit Budget im Portal neu verteilen (LAZKO-Wegfall) · Tagesgeldpuffer auf 72.000 € aufbauen · Dauerauftrag 2.000 €/Monat einrichten</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">01.12.2026</div>
+          <div class="tl-title">ATZ Beginn – Aktive Phase</div>
+          <div class="tl-body">Arbeitszeit 50 % · Brutto 5.696,34 € · Netto 5.512,51 € (inkl. Aufstockung 1.625,18 €) · Laufzeit bis 30.11.2030</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">09/2030</div>
+          <div class="tl-title">Arbeitszeugnis beantragen</div>
+          <div class="tl-body">Zeugnis über gesamte Telekom-Karriere (Aktionspunkt HR-Gespräch 24.07.2026)</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">bis 30.11.2030</div>
+          <div class="tl-title">LAZKO + Langzeitkonto abbauen</div>
+          <div class="tl-body">Kein Übertrag in passive Phase möglich. Abstimmung mit Matthias Willert. Urlaub ebenfalls vollständig vor Passivphase abbauen.</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">01.12.2030</div>
+          <div class="tl-title">ATZ – Passive Phase</div>
+          <div class="tl-body">Freistellung · gleiche Vergütungsstruktur · Gfz/Gfz-GUB klären · Laufzeit bis 30.11.2034</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">06/2034 ⚠️</div>
+          <div class="tl-title">Rentenantrag stellen</div>
+          <div class="tl-body">6 Monate Vorlauf (laut HR DTSE). DRV sagt 3 Monate genügen. Rentenbescheid an HR DTSE weiterleiten → Auszahlung Kapitalkontenplan 16.01.2035</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">01.12.2034</div>
+          <div class="tl-title">Rentenbeginn (Altersrente)</div>
+          <div class="tl-body">Altersrente für langjährig Versicherte (§ 36 SGB VI) · DRV 3.102 € brutto · −3 % Abschlag (10 Mon. × 0,3 %) · dauerhaft</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">16.01.2035</div>
+          <div class="tl-title">Kapitalkontenplan-Auszahlung</div>
+          <div class="tl-body">Einmalige Jahresauszahlung durch HR DTSE · Betrag: laut Kapitalkontenplan-Stand · Auszahlungsform: Einmalzahlung oder 15 Jahre (min. 7.500 €/Jahr prüfen)</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">01.10.2035</div>
+          <div class="tl-title">Abschlagsfreie Regelaltersrente möglich</div>
+          <div class="tl-body">Referenzwert 3.930 € brutto (DRV, 2 %-Rentenanpassung) – wird nicht genutzt (Rentenbeginn bereits 12/2034)</div>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Gesetzliches Risiko -->
+    <div class="alert alert-warn" style="margin-top:4px;">
+      <strong>⚠️ Gesetzesrisiko Blockmodell</strong>
+      Bundesregierung plant Abschaffung des Blockmodells. ATZ-Antrag am 15.07.2026 genehmigt – <strong>5 Tage vor</strong> Bohle-E-Mail (20.07.2026). Kein Handlungsbedarf für diese Planung.
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 4: TO-DOS
+══════════════════════════════════════════════════ -->
+<div id="p-todos" class="page">
+  <div class="page-hdr">
+    <h1>To-dos & Aktionen</h1>
+    <p>Offene Punkte · Stand 26.07.2026</p>
+  </div>
+  <div class="scroll" style="padding-top:16px;">
+
+    <div class="section-title" style="margin-top:4px;">Sofort / nach Genehmigung</div>
+    <div class="card">
+      <div class="todo-item">
+        <div class="todo-check done"></div>
+        <div class="todo-text"><strong>ATZ-Antrag genehmigt</strong><span>FK + HR · 15.07.2026 ✓</span></div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text"><strong>ATZ-Vertrag prüfen und ablegen</strong><span>Kommt postalisch, spätestens 3 Wochen vor 01.12.2026</span></div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Benefit Budget neu verteilen</strong>
+          <span>Im Benefit-Portal: Durch LAZKO-Wegfall freiwerdendes Budget neu verteilen (sonst → automatisch bAV)</span>
+          <span class="todo-date">📅 Nach Genehmigung / vor 01.12.2026</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Steuerberater / Lohnsteuerhilfeverein konsultieren</strong>
+          <span>Belastbare Nettofaktoren f_DRV, f_bAV, f_KAP ermitteln. DRV verweist explizit dorthin (vgl. Abschn. 16.4)</span>
+          <span class="todo-date">📅 Priorität hoch</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Liquiditätsbedarf konkret ermitteln</strong>
+          <span>Fixkosten, variable Lebenshaltung, Rücklagen/Sonderausgaben → Abschnitt 7 ausfüllen</span>
+          <span class="todo-date">📅 Priorität hoch</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Clerical Medical: Modellrechnung anfordern</strong>
+          <span>Für Rentenbeginn 01.12.2034 / 01.10.2035 (bisher nur 01.04.2036). Vertragsänderung beantragt.</span>
+          <span class="todo-date">📅 Ausstehend</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Kapitalanlage auf Entnahmephase ausrichten</strong>
+          <span>Tagesgeldpuffer 72.000 € aufbauen · Dauerauftrag 2.000 €/Monat einrichten</span>
+          <span class="todo-date">📅 Vor 12/2034</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Bis Beginn Ausgleichsphase (12/2030)</div>
+    <div class="card">
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>LAZKO-Zeitguthaben vollständig abbauen</strong>
+          <span>Kein Übertrag in passive Phase möglich. Abstimmung mit Matthias Willert</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Langzeitkonto-Zeitguthaben abbauen</strong>
+          <span>Ebenfalls mit Matthias Willert abstimmen</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Zeugnis beantragen</strong>
+          <span>Über gesamte Telekom-Karriere · Termin: 09/2030</span>
+          <span class="todo-date">📅 09/2030</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Zu Beginn Ausgleichsphase (12/2030)</div>
+    <div class="card">
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Geschäftsfahrzeug (Gfz/Gfz-GUB) klären</strong>
+          <span>Mit Beginn der passiven Phase Handlungsbedarf. Details im Personalportal (FAQ ATZ) vorher prüfen</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Ab 06/2034</div>
+    <div class="card">
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Rentenantrag stellen (DRV)</strong>
+          <span>6 Monate Vorlauf lt. HR DTSE (DRV: 3 Monate ausreichend). Rentenbescheid an HR DTSE weiterleiten.</span>
+          <span class="todo-date">📅 06/2034 – Kritisch!</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Aktionspunkte aus HR-Gespräch (24.07.2026)</div>
+    <div class="card">
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Progressionsvorbehalt prüfen</strong>
+          <span>Mit Progressionsvorbehaltsrechner (Link im HR DTSE Schreiben). Erwartete jährliche Nachzahlung: ca. 2.400 €</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>TPF: Vererbarkeit mit DeTeAssekuranz klären</strong>
+          <span>Aktionspunkt aus HR-Gespräch 24.07.2026</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Kapitalkontenplan: Einmalauszahlung prüfen</strong>
+          <span>Geld selbst anlegen – aber Steuerlast beachten (10 Jahre KV/PV-Beitragspflicht, monatliche Belastung). Zwei Varianten: Einmalzahlung oder 15 Jahre min. 7.500 €/Jahr</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check done"></div>
+        <div class="todo-text">
+          <strong>Private E-Mail beim TPF hinterlegen</strong>
+          <span>steffen.steinhaeuser@mac2castle.de · erledigt 24.07.2026 ✓</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 5: FAKTEN
+══════════════════════════════════════════════════ -->
+<div id="p-fakten" class="page">
+  <div class="page-hdr">
+    <h1>Fakten & Quellen</h1>
+    <p>Stammdaten · Rente · Kontakte</p>
+  </div>
+  <div class="scroll" style="padding-top:16px;">
+
+    <!-- Stammdaten -->
+    <details open>
+      <summary>Stammdaten</summary>
+      <div class="details-body">
+        <div class="row"><span>Geburtsdatum</span><span class="val">26.09.1968</span></div>
+        <div class="row"><span>ATZ-Beginn</span><span class="val">01.12.2026</span></div>
+        <div class="row"><span>ATZ-Ende</span><span class="val">30.11.2034</span></div>
+        <div class="row"><span>Laufzeit ATZ</span><span class="val">8 Jahre (96 Monate)</span></div>
+        <div class="row"><span>Aktive Phase</span><span class="val">12/2026–11/2030</span></div>
+        <div class="row"><span>Passive Phase</span><span class="val">12/2030–11/2034</span></div>
+        <div class="row"><span>Rentenbeginn (mit Abschlag)</span><span class="val">01.12.2034</span></div>
+        <div class="row"><span>Abschlagsfreie Rente möglich ab</span><span class="val">01.10.2035</span></div>
+        <div class="row"><span>ATZ-Regelung</span><span class="val">KBV ATZ AT · AT3</span></div>
+        <div class="row"><span>Steuerklasse</span><span class="val">III · EV · NRW</span></div>
+        <div class="row"><span>KV</span><span class="val">Freiwillig TKK</span></div>
+        <div class="row"><span>ATZ-Genehmigung</span><span class="val">15.07.2026 (FK + HR)</span></div>
+      </div>
+    </details>
+
+    <!-- DRV -->
+    <details>
+      <summary>DRV – Gesetzliche Rente</summary>
+      <div class="details-body">
+        <div class="row"><span>DRV ab 01.12.2034 (−3 %, Abschlag)</span><span class="val bold" style="color:var(--tk);">3.102 € brutto</span></div>
+        <div class="row"><span>KV/PV-Abzug (ca. 12,35 %)</span><span class="val">−383 €</span></div>
+        <div class="row"><span>Zahlbetrag vor Steuer</span><span class="val">2.719 €</span></div>
+        <div class="row"><span>Steueranteil (§ 22 Nr. 1 EStG, 2034)</span><span class="val">88 % steuerpflichtig</span></div>
+        <div class="row"><span>DRV ab 01.10.2035 (abschlagsfrei, Ref.)</span><span class="val">3.259 € (DRV-Sim.) / 3.930 € (2 % Szenario)</span></div>
+        <div class="row"><span>Abschlag dauerhaft</span><span class="val">10 Mon. × 0,3 % = 3,0 %</span></div>
+        <div class="row"><span>Ausgleichsbetrag § 187a</span><span class="val">22.474 € (Break-even ~86 J.)</span></div>
+        <div class="row"><span>DRV-Beratung</span><span class="val">13.07.2026</span></div>
+        <div class="row"><span>BBG RV/AV 2026</span><span class="val">96.600 €/J. · 8.050 €/Mon.</span></div>
+        <div class="row"><span>DRV-Rentenantrag Frist</span><span class="val">06/2034 (6 Mon. Vorlauf HR DTSE)</span></div>
+      </div>
+    </details>
+
+    <!-- bAV -->
+    <details>
+      <summary>Betriebliche Rente (bAV)</summary>
+      <div class="details-body">
+        <div class="row"><span>Kapitalkontenplan (KKP)</span><span class="val">1.281,56 €/Monat</span></div>
+        <div class="row"><span>TPF (Telekom Pensionsfonds)</span><span class="val">501,93 €/Monat (Teilkapital 50.855,13 €)</span></div>
+        <div class="row"><span>bAV gesamt brutto</span><span class="val">1.783,49 €/Monat</span></div>
+        <div class="row"><span>bAV netto (f_bAV 0,70)</span><span class="val">~1.248 €/Monat</span></div>
+        <div class="row"><span>bAV-Start</span><span class="val">TBD (zu klären)</span></div>
+        <div class="row"><span>KKP-Auszahlung</span><span class="val">16.01.2035 (einmal jährl.) · Reihenfolge beachten!</span></div>
+        <div class="row"><span>KKP Vererbarkeit</span><span class="val">Nur 1. Linie (Ehepartner 60 %)</span></div>
+        <div class="row"><span>TPF-Vererbarkeit</span><span class="val">Mit DeTeAssekuranz klären (offen)</span></div>
+      </div>
+    </details>
+
+    <!-- Kapital -->
+    <details>
+      <summary>Kapitalvermögen</summary>
+      <div class="details-body">
+        <div class="row"><span>Portfolio gesamt (06/2026)</span><span class="val bold">352.984 €</span></div>
+        <div class="row"><span>Julius Bär (Depot)</span><span class="val">152.333 €</span></div>
+        <div class="row"><span>ING Direkt-Depot</span><span class="val">191.713 €</span></div>
+        <div class="row"><span>Equate (Telekom-Aktien)</span><span class="val">8.938 € (340 Aktien)</span></div>
+        <div class="row"><span>Sparrate p.a.</span><span class="val">12.000 €</span></div>
+        <div class="row"><span>Portfolio ~2035 (Schätzung)</span><span class="val">~629.000 €</span></div>
+        <div class="row"><span>Tagesgeldpuffer (Ziel)</span><span class="val bold">72.000 €</span></div>
+        <div class="row"><span>Entnahme monatlich</span><span class="val bold">2.000 € (brutto) / 1.600 € netto</span></div>
+        <div class="row"><span>Entnahmerate 2035</span><span class="val">3,82 % (unter 4%-Regel ✓)</span></div>
+      </div>
+    </details>
+
+    <!-- Rürup -->
+    <details>
+      <summary>Rürup-Rente (Clerical Medical)</summary>
+      <div class="details-body">
+        <div class="row"><span>Produkt</span><span class="val">Performancemaster Basisrente</span></div>
+        <div class="row"><span>Versicherer</span><span class="val">Clerical Medical / Scottish Widows Europe</span></div>
+        <div class="row"><span>Vertragsbeginn</span><span class="val">01.04.2007</span></div>
+        <div class="row"><span>Beitragsfrei seit</span><span class="val">Ende 2017</span></div>
+        <div class="row"><span>Gesamtbeiträge</span><span class="val">60.000 €</span></div>
+        <div class="row"><span>Rente Basis (3 %, Option 100 %)</span><span class="val">541 €/Monat</span></div>
+        <div class="row"><span>Rente konservativ (0 % Wachstum)</span><span class="val">144 €/Monat</span></div>
+        <div class="row"><span>Rente optimistisch (4,5 %)</span><span class="val">623 €/Monat</span></div>
+        <div class="row"><span>Vertragsablauf laut Vertrag</span><span class="val">01.04.2036 (Änderung auf 12/2034 beantragt)</span></div>
+        <div class="alert alert-warn" style="margin-top:8px;">
+          <strong>⚠️ Aktion</strong>
+          Modellrechnung für 01.12.2034 / 01.10.2035 noch ausstehend!
+        </div>
+      </div>
+    </details>
+
+    <!-- Riester -->
+    <details>
+      <summary>Riester-Rente (UniProfiRente Select)</summary>
+      <div class="details-body">
+        <div class="row"><span>Depotwert (28.06.2026)</span><span class="val">39.622,32 €</span></div>
+        <div class="row"><span>Kapitalwahlrecht (30 %)</span><span class="val">ca. 11.887 €</span></div>
+        <div class="row"><span>Monatl. Leibrente (70 %)</span><span class="val">voraussichtlich 100–150 €</span></div>
+        <div class="row"><span>Rentenfaktor festgelegt</span><span class="val">ca. 2033 (frühestens 2028)</span></div>
+        <div class="row"><span>Auszahlung ab</span><span class="val">01.10.2035 (geplant)</span></div>
+        <div class="row"><span>Steuerlich</span><span class="val">100 % steuerpflichtig (f_DRV = f_Riester)</span></div>
+        <div class="row"><span>KV/PV-Verbeitragung</span><span class="val">Nein (privater Vertrag)</span></div>
+      </div>
+    </details>
+
+    <!-- Gehaltsdaten -->
+    <details>
+      <summary>Gehaltsdaten (Kalibrierung)</summary>
+      <div class="details-body">
+        <div class="row"><span>Jahreszielgehalt</span><span class="val">136.711,90 €</span></div>
+        <div class="row"><span>Fixgehalt brutto/Monat</span><span class="val">9.114,13 €</span></div>
+        <div class="row"><span>Fixgehalt netto/Monat</span><span class="val">5.957,61 €</span></div>
+        <div class="row"><span>Variable brutto/Monat (100 %)</span><span class="val">2.278,53 €</span></div>
+        <div class="row"><span>1/12 Zielgehalt brutto</span><span class="val">11.392,66 €</span></div>
+        <div class="row"><span>1/12 Zielgehalt netto (KV korr.)</span><span class="val">~7.219 € (Faktor ~0,634)</span></div>
+        <div class="row"><span>ATZ-Brutto (Fix 50 % + Var 50 %)</span><span class="val">5.696,34 €</span></div>
+        <div class="row"><span>ATZ-Netto (ohne Aufstockung)</span><span class="val">3.887,34 €</span></div>
+        <div class="row"><span>Nettofaktor Vollzeit</span><span class="val">0,654</span></div>
+      </div>
+    </details>
+
+    <!-- Kontakte -->
+    <div class="section-title">Kontakte</div>
+    <div class="card">
+      <div class="contact">
+        <div class="contact-icon">📞</div>
+        <div class="contact-info">
+          <strong>Elke Schmidt-Peschta (HR DTSE)</strong>
+          <a href="mailto:e.schmidt-peschta@telekom.de">e.schmidt-peschta@telekom.de</a>
+          <a href="tel:+4991115071936">+49 911 1507136</a>
+          <a href="tel:+4916090717385">+49 160 90717385</a>
+        </div>
+      </div>
+      <div class="contact">
+        <div class="contact-icon">📋</div>
+        <div class="contact-info">
+          <strong>DRV (Beratungstermin 13.07.2026)</strong>
+          <span>Rentenantrag: 3 Monate vor 01.12.2034 = 09/2034 (DRV) / 06/2034 (HR DTSE)</span>
+          <span>Formular V0210 für Ausgleichszahlungen § 187a</span>
+        </div>
+      </div>
+      <div class="contact">
+        <div class="contact-icon">💼</div>
+        <div class="contact-info">
+          <strong>Matthias Willert (Freistellung LAZKO / Langzeitkonto)</strong>
+          <span>Abstimmung LAZKO- und Langzeitkonto-Abbau bis 30.11.2030</span>
+        </div>
+      </div>
+      <div class="contact">
+        <div class="contact-icon">🏦</div>
+        <div class="contact-info">
+          <strong>Clerical Medical / Heidelberger Leben</strong>
+          <span>Modellrechnung für 12/2034 anfordern · Vertragsänderung beantragt</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quellen -->
+    <details>
+      <summary>Wichtige Quellen & Links</summary>
+      <div class="details-body">
+        <div class="row"><span>BMF-Steuerrechner 2026</span></div>
+        <p style="font-size:12px;color:var(--dk2);word-break:break-all;padding:4px 0;">http://www.bmf-steuerrechner.de/interface/2026Version1.xhtml?code=LSt2026ext&LZZ=2&RE4=1139266&STKL=3&R=1&KRV=0&PKV=0&PVZ=1</p>
+        <div class="row"><span>ATZ-Antrag Auftragsnummer</span><span class="val">HRDE-1005499916</span></div>
+        <div class="row"><span>DRV-Vorausberechnung</span><span class="val">13.07.2026</span></div>
+        <div class="row"><span>ATZ-Prognose (maßgeblich)</span><span class="val">29.06.2026 · HRDE-1005457279_00313912</span></div>
+        <div class="row"><span>Kapitalkontenplan (Stand)</span><span class="val">28.06.2026</span></div>
+        <div class="row"><span>Rentenrechner</span><span class="val">Rentenrechner.py · Rentenrechner.html</span></div>
+        <div class="row"><span>§ 36 SGB VI</span><span class="val">Altersrente langjährig Versicherte</span></div>
+        <div class="row"><span>§ 187a SGB VI</span><span class="val">Ausgleichszahlungen Abschläge</span></div>
+        <div class="row"><span>§ 22 Nr. 1 EStG</span><span class="val">Steueranteil Rente (88 % Kohorte 2034)</span></div>
+        <div class="row"><span>§ 3 Nr. 28 EStG</span><span class="val">Steuerfreiheit Aufstockungsbeträge</span></div>
+        <div class="row"><span>§ 32b EStG</span><span class="val">Progressionsvorbehalt ATZ-Aufstockung</span></div>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     PAGE 6: WISSEN
+══════════════════════════════════════════════════ -->
+<div id="p-wissen" class="page">
+  <div class="page-hdr">
+    <h1>Wissen</h1>
+    <p>Konzepte · Formeln · Hintergründe</p>
+  </div>
+  <div class="scroll" style="padding-top:16px;">
+
+    <details open>
+      <summary>📦 Blockmodell – wie funktioniert es?</summary>
+      <div class="details-body">
+        <p style="font-size:14px;line-height:1.6;color:#333;">Beim <strong>Blockmodell</strong> wird die ATZ-Laufzeit in zwei gleich lange Hälften aufgeteilt:</p>
+        <div class="tbl-wrap" style="margin:8px 0;">
+        <table>
+          <tr><th>Phase</th><th>Zeitraum</th><th>Tätigkeit</th><th>Vergütung</th></tr>
+          <tr><td><strong>Aktiv</strong></td><td>12/2026–11/2030</td><td>Vollzeit-Arbeit</td><td>50 % Gehalt + Aufstockung</td></tr>
+          <tr><td><strong>Passiv</strong></td><td>12/2030–11/2034</td><td>Freistellung</td><td>50 % Gehalt + Aufstockung</td></tr>
+        </table>
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;">Wirtschaftlich: Man arbeitet 4 Jahre voll und bekommt 8 Jahre lang dasselbe Gehalt. Die Aufstockung sorgt dafür, dass das Netto auf ≥ 78 % des Referenznettos aufgefüllt wird.</p>
+        <div class="alert alert-warn" style="margin-top:10px;">
+          <strong>⚠️ Gesetzgebung</strong>
+          Bundesregierung plant Abschaffung des Blockmodells. Da der ATZ-Antrag am 15.07.2026 genehmigt wurde, ist diese Planung geschützt.
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>💰 Aufstockung: /611 FIX, /611 VAR, /612</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;margin-bottom:8px;">Die Aufstockung besteht aus drei Lohnarten und ist nach <strong>§ 3 Nr. 28 EStG steuerfrei</strong>, unterliegt aber dem <strong>Progressionsvorbehalt (§ 32b EStG)</strong>.</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Lohnart</th><th class="num">Betrag</th><th>Herleitung</th></tr>
+          <tr><td><strong>/611 FIX</strong></td><td class="num">911,41 €</td><td>20 % × 4.557,07 € (50 % Fixgehalt) – gesetzl. Mindest (§ 3 ATG)</td></tr>
+          <tr><td><strong>/611 VAR</strong></td><td class="num">227,85 €</td><td>20 % × 1.139,27 € (Variable ATZ) – Mindestaufstockung Variable</td></tr>
+          <tr><td><strong>/612</strong></td><td class="num">485,91 €</td><td>Tariflicher Auffüllbetrag: 78 %-Ziel − (TZ-Netto + /611 FIX)</td></tr>
+          <tr style="background:#e8f5e9;"><td><strong>Gesamt</strong></td><td class="num bold">1.625,18 €</td><td></td></tr>
+        </table>
+        </div>
+        <div class="formula" style="margin-top:8px;">
+          78%-Ziel = 78 % × 5.957,61 € = 4.646,94 €
+          TZ-Netto + /611 FIX = 3.249,61 + 911,41 = 4.161,02 €
+          /612 = 4.646,94 − 4.161,02 = 485,91 €
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>📊 Progressionsvorbehalt – was bedeutet das?</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Die steuerfreien Aufstockungsbeträge (1.625,18 €/Monat) sind zwar selbst steuerfrei, erhöhen aber den <strong>Steuersatz</strong> auf das übrige steuerpflichtige Einkommen.</p>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;"><strong>Funktionsweise:</strong></p>
+        <ol style="font-size:13px;color:#444;padding-left:1.5em;line-height:1.8;">
+          <li>Aufstockung (19.502 €/Jahr) wird zum steuerpflichtigen Einkommen <em>addiert</em> → ermittelt höheren Grenzsteuersatz</li>
+          <li>Dieser höhere Steuersatz wird dann nur auf das <em>tatsächlich steuerpflichtige</em> Einkommen angewendet</li>
+          <li>Ergebnis: jährliche Steuernachzahlung <strong>ca. 2.400 €</strong></li>
+        </ol>
+        <div class="alert alert-info" style="margin-top:10px;">
+          <strong>💡 Aktion</strong>
+          Progressionsvorbehaltsrechner nutzen (Link im HR DTSE Schreiben). Ggf. Vorauszahlungen einrichten.
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>📉 Rentenabschlag: dauerhaft −3 %</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Der Abschlag entsteht, weil die Rente <strong>10 Monate früher</strong> als die abschlagsfreie Rente (01.10.2035) bezogen wird.</p>
+        <div class="formula">
+          Abschlag = 10 Monate × 0,3 %/Monat = 3,0 %
+          DRV abschlagsfrei (Ref.): 3.259 € (DRV-Sim.) / 3.930 € (2 %-Szenario)
+          DRV mit Abschlag: 3.930 € × (1 − 0,03) = 3.811 € → DRV-Sim: 3.102 €
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-top:8px;"><strong>Wichtig:</strong> Der Abschlag ist <em>dauerhaft</em> – er gilt lebenslang und wird nicht rückwirkend korrigiert, wenn man später 65/67 wird.</p>
+        <div class="tbl-wrap" style="margin-top:8px;">
+        <table>
+          <tr><th>Ausgleich § 187a SGB VI</th><th class="num">Wert</th></tr>
+          <tr><td>Ausgleichsbetrag einmalig</td><td class="num bold">22.474 €</td></tr>
+          <tr><td>Monatlicher Vorteil (abschlagsfrei vs. −3 %)</td><td class="num">~93 € netto</td></tr>
+          <tr><td>Break-even-Alter</td><td class="num">~86 Jahre</td></tr>
+        </table>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:6px;">Formular V0210 bei der DRV einreichen (frühestens nach ATZ-Genehmigung). Zahlung muss vor Rentenbeginn erfolgen.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>🏛️ Kohortenprinzip: Steueranteil der Rente</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Nach § 22 Nr. 1 EStG (Alterseinkünftegesetz 2005) steigt der steuerpflichtige Anteil der gesetzlichen Rente jährlich. Maßgeblich ist das <strong>Jahr des Rentenbeginns</strong> (Kohortenprinzip).</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Rentenbeginn</th><th class="num">Steuerpflichtig</th></tr>
+          <tr style="background:#e8f5e9;"><td><strong>2034 (unser Fall)</strong></td><td class="num bold">88 %</td></tr>
+          <tr><td>2035</td><td class="num">89 %</td></tr>
+          <tr><td>2040</td><td class="num">94 %</td></tr>
+          <tr><td>2058+</td><td class="num">100 %</td></tr>
+        </table>
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-top:8px;">Der steuerpflichtige Anteil bleibt für die gesamte Rentenlaufzeit bei <strong>88 %</strong> eingefroren (Kohorte 2034). Er erhöht sich nicht mit den Jahren.</p>
+        <div class="alert alert-warn" style="margin-top:8px;">
+          <strong>⚠️ Früherer Fehler im Dokument</strong>
+          Ursprünglich stand 98 % – korrigiert auf 88 % (DRV-bestätigt, 26.07.2026)
+        </div>
+      </div>
+    </details>
+
+    <details>
+      <summary>🧮 Nettofaktoren – warum unterschiedlich?</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Verschiedene Einkommensquellen werden unterschiedlich hoch besteuert und verbeitragt:</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Quelle</th><th>Abzüge</th><th class="num">Faktor (Basis)</th></tr>
+          <tr><td><strong>DRV / Rürup / Riester</strong></td><td>Einkommensteuer (88 % BMG) + KV/PV-Beitrag (~12,35 %)</td><td class="num bold">0,84</td></tr>
+          <tr><td><strong>bAV</strong></td><td>Volle Einkommensteuer + <em>voller</em> KV/PV-Beitrag (§ 229 SGB V) – kein AG-Anteil in der Rente</td><td class="num bold">0,70</td></tr>
+          <tr><td><strong>Kapital (ETF/Tagesgeld)</strong></td><td>Abgeltungsteuer 25 % + Soli (effektiv ~26,375 %) – nur auf Erträge/Kursgewinne</td><td class="num bold">0,80</td></tr>
+        </table>
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-top:8px;"><strong>Wichtig bAV:</strong> Als Rentner zahlt man KV/PV selbst (kein AG-Zuschuss mehr). Deshalb ist f_bAV deutlich niedriger als f_DRV.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>📐 4%-Regel und Tagesgeld-Strategie</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Die <strong>4%-Regel</strong> (Trinity-Studie, USA) besagt: Ein Depot hält 30+ Jahre, wenn man maximal 4 % p.a. entnimmt.</p>
+        <div class="tbl-wrap" style="margin-bottom:8px;">
+        <table>
+          <tr><th>Szenario</th><th class="num">Entnahme</th><th class="num">Portfolio 2035</th><th class="num">Rate</th></tr>
+          <tr style="background:#e8f5e9;"><td><strong>Unser Plan</strong></td><td class="num bold">24.000 €/J.</td><td class="num bold">629.000 €</td><td class="num bold" style="color:var(--ok);">3,82 % ✓</td></tr>
+          <tr><td>4%-Grenze</td><td class="num">25.160 €/J.</td><td class="num">629.000 €</td><td class="num">4,00 %</td></tr>
+        </table>
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:6px;"><strong>Tagesgeldpuffer-Strategie:</strong></p>
+        <ol style="font-size:13px;color:#444;padding-left:1.5em;line-height:1.8;">
+          <li>72.000 € (= 3 Jahresbeiträge) dauerhaft auf Tagesgeldkonto</li>
+          <li>Monatlicher Dauerauftrag 2.000 € vom Tagesgeldkonto</li>
+          <li>Bei guten Börsenjahren: Tagesgeldkonto durch ETF-Verkäufe auffüllen</li>
+          <li>Bei Kursrückgang: <em>keine</em> ETF-Verkäufe, Puffer aufbrauchen</li>
+          <li>Schutz vor Sequence-of-Returns-Risiko (schlechte Jahre kurz nach Rentenbeginn)</li>
+        </ol>
+      </div>
+    </details>
+
+    <details>
+      <summary>💡 ATZ-Netto: 75 % vs. 92,5 % – was stimmt?</summary>
+      <div class="details-body">
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Beide Zahlen stimmen – sie messen nur verschiedene Bezugsgrößen:</p>
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Vergleich</th><th class="num">ATZ-Netto</th><th class="num">Referenz-Netto</th><th class="num">Quote</th></tr>
+          <tr><td>vs. Zielgehalt (100 %)</td><td class="num">5.512,51 €</td><td class="num">~7.219 €</td><td class="num bold" style="color:var(--warn);">76,4 %</td></tr>
+          <tr style="background:#e8f5e9;"><td>vs. Fixgehalt</td><td class="num">5.512,51 €</td><td class="num">5.957,61 €</td><td class="num bold" style="color:var(--ok);">92,5 %</td></tr>
+        </table>
+        </div>
+        <p style="font-size:13px;color:#444;line-height:1.5;margin-top:8px;">Die <strong>76 %</strong> entstehen nur wegen der hohen variablen Vergütungskomponente (~2.279 €/Monat Zielgehalt), die in der ATZ stark reduziert wird. <strong>92,5 %</strong> auf Fixgehalt-Niveau ist weit über dem tariflichen Üblichen (70–85 %).</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>⚖️ Blockmodell vs. Gleichverteilung</summary>
+      <div class="details-body">
+        <div class="tbl-wrap">
+        <table>
+          <tr><th>Merkmal</th><th>Blockmodell</th><th>Gleichverteilung</th></tr>
+          <tr><td>Arbeitszeit</td><td>4J. voll, 4J. frei</td><td>8J. halbtags</td></tr>
+          <tr><td>Netto/Monat</td><td>Identisch</td><td>Identisch</td></tr>
+          <tr><td>Freizeit</td><td>4 Jahre am Stück</td><td>Jeden Tag Hälfte frei</td></tr>
+          <tr><td>Rentenrechtl. Beitrag</td><td>⚠️ Nur auf ATZ-Gehalt</td><td>Nur auf ATZ-Gehalt</td></tr>
+          <tr><td>Empfehlung Rentenkomm.</td><td>❌ Abschaffen</td><td>✓ Bevorzugt</td></tr>
+          <tr><td>Unser Schutz</td><td>✅ Genehmigt 15.07.2026</td><td>–</td></tr>
+        </table>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-top:6px;">Die Rentenkommission (BMAS, Juni 2026) empfiehlt Abschaffung des Blockmodells. Für diese Planung irrelevant – Antrag bereits genehmigt.</p>
+      </div>
+    </details>
+
+    <details>
+      <summary>🔢 Wichtige Formeln auf einen Blick</summary>
+      <div class="details-body">
+        <div class="formula">DRV_netto = DRV_brutto × f_DRV (0,84)</div>
+        <div class="formula">bAV_netto = bAV_brutto × f_bAV (0,70)</div>
+        <div class="formula">KAP_netto = KAP_brutto × f_KAP (0,80)</div>
+        <div class="formula">Gesamtrente_netto = DRV + bAV + KAP + Rürup + Riester</div>
+        <div class="formula">Rentenabschlag = Monate × 0,3 % (max. 10,8 %)</div>
+        <div class="formula">Entnahmerate = Jahresentnahme / Portfoliowert</div>
+        <div class="formula">78%-Ziel = 78 % × Nettofixgehalt_vor_ATZ</div>
+        <div class="formula">/612 = 78%-Ziel − (TZ-Netto + /611 FIX)</div>
+      </div>
+    </details>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     NAVIGATION
+══════════════════════════════════════════════════ -->
+<nav id="nav">
+  <button class="active" onclick="nav('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Übersicht
+  </button>
+  <button onclick="nav('finanzen')">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Finanzen
+  </button>
+  <button onclick="nav('zeitplan')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    Zeitplan
+  </button>
+  <button onclick="nav('todos')">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+    To-dos
+  </button>
+  <button onclick="nav('fakten')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    Fakten
+  </button>
+  <button onclick="nav('wissen')">
+    <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    Wissen
+  </button>
+</nav>
+
+<script>
+// ── Navigation ──
+function nav(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('p-' + id).classList.add('active');
+  const idx = ['overview','finanzen','zeitplan','todos','fakten','wissen'].indexOf(id);
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Todo toggle ──
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.todo-item').forEach(item => {
+    const chk = item.querySelector('.todo-check');
+    if (!chk) return;
+    chk.addEventListener('click', () => {
+      chk.classList.toggle('done');
+      item.classList.toggle('done-item');
+    });
+  });
+});
+
+// ── Scenario switcher ──
+const scenarios = {
+  K: {
+    title: 'Konservativ (f_DRV 0,78 | f_bAV 0,62 | f_KAP 0,72)',
+    drv: '2.419,56 €', bav: '1.105,76 €', kap: '1.440,00 €',
+    ruerup: '112,32 €', riester: '97,50 €',
+    total: '5.077,64 €', totalR: '5.175,14 €'
+  },
+  B: {
+    title: 'Basis (f_DRV 0,84 | f_bAV 0,70 | f_KAP 0,80)',
+    drv: '2.605,68 €', bav: '1.248,44 €', kap: '1.600,00 €',
+    ruerup: '454,44 €', riester: '105,00 €',
+    total: '5.908,56 €', totalR: '6.013,56 €'
+  },
+  O: {
+    title: 'Optimistisch (f_DRV 0,89 | f_bAV 0,77 | f_KAP 0,90)',
+    drv: '2.760,78 €', bav: '1.373,29 €', kap: '1.800,00 €',
+    ruerup: '554,47 €', riester: '111,25 €',
+    total: '6.488,54 €', totalR: '6.599,79 €'
+  }
+};
+
+function setScenario(key) {
+  const s = scenarios[key];
+  document.getElementById('sc-title').textContent = s.title;
+  document.getElementById('sc-drv').textContent = s.drv;
+  document.getElementById('sc-bav').textContent = s.bav;
+  document.getElementById('sc-kap').textContent = s.kap;
+  document.getElementById('sc-ruerup').textContent = s.ruerup;
+  document.getElementById('sc-riester').textContent = s.riester;
+  document.getElementById('sc-total').textContent = s.total;
+  document.getElementById('sc-total-r').textContent = s.totalR;
+  document.querySelectorAll('.stab').forEach((t, i) => {
+    t.classList.toggle('active', ['K','B','O'][i] === key);
+  });
+}
+
+// ── Service Worker (Offline-Support) ──
+if ('serviceWorker' in navigator) {
+  const sw = `
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open('atz-v1').then(c => c.add('/')));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request)));
+});
+`;
+  const blob = new Blob([sw], {type: 'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(() => {});
+}
+
+// ── PWA Install ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+});
+</script>
+
+<!-- Web App Manifest (inline via link) -->
+<script>
+const manifest = {
+  name: 'ATZ Planung – Dr. Steffen Steinhäuser',
+  short_name: 'ATZ Planung',
+  description: 'Altersteilzeit & Rentenplanung',
+  start_url: '.',
+  display: 'standalone',
+  background_color: '#f5f5f7',
+  theme_color: '#003b6e',
+  icons: [{
+    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%23003b6e"/><text y="68" x="50" text-anchor="middle" font-size="58" fill="white">€</text></svg>',
+    sizes: '192x192', type: 'image/svg+xml'
+  }]
+};
+const blob2 = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+const lnk = document.createElement('link');
+lnk.rel = 'manifest'; lnk.href = URL.createObjectURL(blob2);
+document.head.appendChild(lnk);
+</script>
+</body>
+</html>
