@@ -1,0 +1,626 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fiktive Vorausberechnung – DRV Baden-Württemberg</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="./manifest.json">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="./icons/icon-192x192.png">
+<link rel="icon" type="image/png" href="./icons/icon-192x192.png">
+
+<style>
+  /* ── Basis ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 10pt;
+    background: #e8e8e8;
+    color: #000;
+  }
+
+  /* ── Seite ──────────────────────────────────────────── */
+  .seite {
+    width: 297mm;
+    min-height: 210mm;
+    margin: 12mm auto;
+    background: #fff;
+    padding: 14mm 16mm 10mm 16mm;
+    box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── Wasserzeichen ───────────────────────────────────── */
+  .wasserzeichen {
+    position: absolute;
+    left: -38mm;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transform-origin: center center;
+    font-size: 8.5pt;
+    color: #777;
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    line-height: 1.1;
+    text-align: center;
+    pointer-events: none;
+    user-select: none;
+    width: 120mm;
+  }
+
+  /* ── Kopfzeile ───────────────────────────────────────── */
+  .kopf-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 4mm;
+    margin-bottom: 5mm;
+  }
+  .kopf-meta { font-size: 8pt; color: #444; line-height: 1.6; }
+  .drv-logo {
+    text-align: right; font-size: 9.5pt; font-weight: bold;
+    line-height: 1.5; color: #c00;
+  }
+
+  /* ── Eingabe-Bereich ─────────────────────────────────── */
+  .params {
+    border: 1px solid #999; border-radius: 2px;
+    padding: 4mm 5mm; margin-bottom: 4mm; background: #fafafa;
+  }
+  .params-gruppe {
+    border: 1px solid #ddd; border-radius: 2px;
+    padding: 3mm 4mm; margin-bottom: 3mm; background: #fff;
+  }
+  .params-gruppe h4 {
+    font-size: 8pt; font-weight: bold; color: #555;
+    margin-bottom: 2.5mm; border-bottom: 1px solid #eee;
+    padding-bottom: 1.5mm; text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .params-gruppe h4 span { font-weight: normal; font-style: italic; color: #888; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 2mm 5mm; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 2mm 5mm; }
+  .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 2mm 5mm; }
+  .param-group { display: flex; flex-direction: column; gap: 1mm; }
+  .param-group label { font-size: 7.5pt; color: #555; font-weight: bold; }
+  .param-group input, .param-group select {
+    font-size: 9pt; border: 1px solid #aaa; border-radius: 2px;
+    padding: 1.5mm 2mm; background: #fff; width: 100%;
+  }
+  .param-group input:focus { outline: 2px solid #c00; outline-offset: 1px; }
+  .param-group .auto-wert {
+    font-size: 9pt; color: #444; padding: 1.5mm 2mm;
+    border: 1px solid #e0e0e0; background: #f5f5f5;
+    border-radius: 2px; font-weight: bold;
+  }
+  .param-group.highlight-input input {
+    border-color: #c00; background: #fff5f5; font-weight: bold;
+  }
+
+  /* Warnbox wenn ATZ-Regelrente von Auto-Berechnung abweicht */
+  .abweich-warn {
+    margin-top: 2mm; font-size: 7.5pt; color: #b8600a;
+    background: #fff8e1; padding: 1.5mm 2.5mm; border-radius: 2px;
+    border: 1px solid #ffe082; display: none;
+  }
+
+  .btn-berechnen {
+    background: #c00; color: #fff; border: none; border-radius: 2px;
+    padding: 2mm 6mm; font-size: 9pt; font-weight: bold;
+    cursor: pointer; letter-spacing: 0.02em; white-space: nowrap;
+  }
+  .btn-berechnen:hover { background: #a00; }
+  .btn-export {
+    background: #336; color: #fff; border: none; border-radius: 2px;
+    padding: 2mm 5mm; font-size: 8.5pt; cursor: pointer; margin-left: 3mm;
+  }
+  .btn-export:hover { background: #224; }
+
+  /* ── Kennzahl-Übersicht (3-spaltig, DRV-Vorlage) ────── */
+  .kennzahlen {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    gap: 3mm; margin-bottom: 5mm;
+  }
+  .kz-box { border: 1px solid #ccc; border-radius: 2px; padding: 2.5mm 3mm; background: #f7f7f7; }
+  .kz-box .kz-label { font-size: 7pt; color: #666; }
+  .kz-box .kz-wert  { font-size: 10.5pt; font-weight: bold; color: #333; }
+  .kz-box .kz-sub   { font-size: 7pt; color: #888; margin-top: 1mm; }
+  .kz-box.hl-gelb   { border-color: #e6a800; background: #fffbee; }
+  .kz-box.hl-gelb .kz-wert { color: #b8860b; }
+  .kz-box.hl-gruen  { border-color: #28a745; background: #f0fff4; }
+  .kz-box.hl-gruen .kz-wert { color: #1a7a30; }
+
+  /* ── Tabelle ─────────────────────────────────────────── */
+  .tabelle-wrapper { overflow-x: auto; }
+  table.drv {
+    width: 100%; border-collapse: collapse; font-size: 8pt; table-layout: fixed;
+  }
+  table.drv thead tr { background: #333; color: #fff; }
+  table.drv thead th {
+    padding: 2mm 1.5mm; text-align: right; font-weight: bold;
+    font-size: 7.5pt; border: 1px solid #555; line-height: 1.3;
+  }
+  table.drv thead th:first-child,
+  table.drv thead th:nth-child(2) { text-align: center; }
+  table.drv tbody tr { border-bottom: 1px solid #e0e0e0; }
+  table.drv tbody tr:nth-child(even) { background: #f6f6f6; }
+  table.drv tbody tr:hover { background: #fff3e0; }
+  table.drv td { padding: 1.5mm 1.5mm; text-align: right; vertical-align: middle; }
+  table.drv td:first-child { text-align: center; font-weight: bold; }
+  table.drv td:nth-child(2) { text-align: center; }
+
+  /* ── Sondermarkierungen ──────────────────────────────── */
+  tr.geplant td {
+    background: #fff3cd !important; font-weight: bold;
+    border-top: 2px solid #e6a800; border-bottom: 2px solid #e6a800;
+  }
+  tr.geplant td:first-child::after { content: " \25C4"; color: #b8860b; font-size: 7pt; }
+  tr.abschlagsfrei td {
+    background: #d4edda !important; font-weight: bold;
+    border-top: 2px solid #28a745; border-bottom: 2px solid #28a745;
+  }
+  tr.abschlagsfrei td:first-child::after { content: " \2605"; color: #1a7a30; font-size: 7pt; }
+  tr.abschlag td { color: #333; }
+  tr.zuschlag td { color: #1a5c8f; }
+  .neg { color: #c00; }
+  .pos { color: #1a7a30; }
+  .null { color: #888; font-style: italic; }
+
+  /* ── Legende ─────────────────────────────────────────── */
+  .legende {
+    margin-top: 4mm; font-size: 7.5pt; color: #555;
+    display: flex; gap: 5mm; flex-wrap: wrap; align-items: center;
+  }
+  .legende-item { display: flex; align-items: center; gap: 1.5mm; }
+  .legende-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  /* ── Analyse-Box ─────────────────────────────────────── */
+  .analyse {
+    margin-top: 5mm; border: 1px solid #aaa; border-radius: 2px;
+    padding: 3mm 4mm; background: #f4f8ff;
+  }
+  .analyse h4 { font-size: 8.5pt; margin-bottom: 2mm; color: #224; }
+  .analyse table { width: 100%; font-size: 8pt; border-collapse: collapse; }
+  .analyse td { padding: 1mm 2mm; border-bottom: 1px solid #dde; }
+  .analyse td:last-child { text-align: right; font-weight: bold; }
+
+  /* ── Disclaimer ──────────────────────────────────────── */
+  .disclaimer {
+    margin-top: 6mm; padding: 3mm 4mm; border: 1px solid #ddd;
+    background: #fafafa; font-size: 7pt; color: #666; line-height: 1.5; border-radius: 2px;
+  }
+
+  /* ── Druck ───────────────────────────────────────────── */
+  @media print {
+    body { background: #fff; }
+    .seite { box-shadow: none; margin: 0; width: 100%; padding: 10mm; }
+    .params { background: #f9f9f9; }
+    .btn-berechnen, .btn-export, .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="seite">
+
+  <div class="wasserzeichen">
+    Fiktive Vorausberechnung<br>
+    ist ein Produkt der DRV Baden-Württemberg und kann nur im Beratungsgespräch erstellt werden.
+  </div>
+
+  <div class="kopf-grid">
+    <div class="kopf-meta">
+      <strong>Rentenauskunft vom 13.07.2026</strong> &nbsp;|&nbsp; Fiktive Vorausberechnung – ATZ-Szenario<br>
+      Versicherte Person: Steffen Steinhäuser, *26.09.1968 &nbsp;|&nbsp; Geburtsdatum: 26.09.1968<br>
+      Speicherung bis: 31.12.2025 &nbsp;|&nbsp; Beratungsdatum: 13.07.2026
+    </div>
+    <div class="drv-logo">Deutsche<br>Rentenversicherung<br><span style="font-size:8pt;font-weight:normal">Baden-Württemberg</span></div>
+  </div>
+
+  <div class="params">
+
+    <div class="params-gruppe">
+      <h4>A &nbsp; Werte aus der Rentenauskunft <span>(DRV-Seite 1 &amp; Anlage Berechnung)</span></h4>
+      <div class="grid-4">
+        <div class="param-group">
+          <label>Regelrente ab 01.10.2035 – aktuell (€)<br><span style="font-weight:normal;font-size:7pt">nur bisherige Beitragszeiten bis 12/2025</span></label>
+          <input type="number" id="rente_aktuell" value="2542.43" step="0.01" min="500" max="9999">
+        </div>
+        <div class="param-group">
+          <label>Regelrente ab 01.10.2035 – Hochrechnung (€)<br><span style="font-weight:normal;font-size:7pt">Vollentgelt bis 10/2035 weitergerechnet</span></label>
+          <input type="number" id="rente_hoch" value="3360" step="1" min="500" max="9999">
+        </div>
+        <div class="param-group">
+          <label>Persönliche Entgeltpunkte<br><span style="font-weight:normal;font-size:7pt">Stand 31.12.2025</span></label>
+          <input type="number" id="entgeltpunkte" value="59.7937" step="0.0001" min="1">
+        </div>
+        <div class="param-group">
+          <label>Aktueller Rentenwert (€/Punkt)<br><span style="font-weight:normal;font-size:7pt">ab 01.07.2026</span></label>
+          <input type="number" id="rentenwert" value="42.52" step="0.01" min="10">
+        </div>
+      </div>
+    </div>
+
+    <div class="params-gruppe">
+      <h4>B &nbsp; ATZ-Hochrechnungsparameter <span>(Änderung des Entgelts für die Prognose)</span></h4>
+      <div class="grid-5">
+        <div class="param-group">
+          <label>Letztes Jahresbrutto (€)<br><span style="font-weight:normal;font-size:7pt">Basis der Hochrechnung ab 01.01.2026</span></label>
+          <input type="number" id="jahresbrutto" value="95975" step="1" min="10000">
+        </div>
+        <div class="param-group">
+          <label>Verändertes Entgelt ab<br><span style="font-weight:normal;font-size:7pt">ATZ-Beginn</span></label>
+          <input type="month" id="atz_beginn" value="2026-12">
+        </div>
+        <div class="param-group">
+          <label>ATZ-Entgelt (% des Vollentgelts)<br><span style="font-weight:normal;font-size:7pt">z. B. 90 für 90 %</span></label>
+          <input type="number" id="atz_pct" value="90" step="1" min="1" max="100">
+        </div>
+        <div class="param-group">
+          <label>Monatl. ATZ-Entgelt (auto, €)<br><span style="font-weight:normal;font-size:7pt">Jahresbrutto × % / 12</span></label>
+          <div class="auto-wert" id="atz_monat_anzeige">7.198,13</div>
+        </div>
+        <div class="param-group">
+          <label>Rentensteigerung bei Vollentgelt<br><span style="font-weight:normal;font-size:7pt">Jahresverdienst entspricht ca. X €/Monat</span></label>
+          <div class="auto-wert" id="rente_steigerung_anzeige">–</div>
+        </div>
+      </div>
+      <div style="margin-top:3mm;">
+        <div class="grid-3" style="align-items:end;">
+          <div class="param-group highlight-input">
+            <label>&#9654; DRV-ATZ-Simulation: Regelrente 01.10.2035 (€)<br>
+              <span style="font-weight:normal;font-size:7pt">Direkt aus DRV-Beratungsausdruck entnehmen (Hauptwert für Tabellenberechnung)</span>
+            </label>
+            <input type="number" id="regelrente" value="3259" step="1" min="500" max="9999">
+          </div>
+          <div class="param-group">
+            <label>Auto-Näherung aus A+B (€)<br>
+              <span style="font-weight:normal;font-size:7pt">Formel: R_aktuell + n_voll·r_voll + n_atz·r_voll·(ATZ%/100)</span>
+            </label>
+            <div class="auto-wert" id="regelrente_auto">–</div>
+            <div class="abweich-warn" id="abweich_warn">Abweichung – DRV-Simulationswert bitte manuell eintragen.</div>
+          </div>
+          <div class="param-group">
+            <label>&nbsp;</label>
+            <div style="display:flex;align-items:center;gap:2mm;">
+              <button class="btn-berechnen" onclick="berechne()">Neuberechnen</button>
+              <button class="btn-export" onclick="exportCSV()">CSV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="params-gruppe">
+      <h4>C &nbsp; Berechnungsparameter &amp; Tabellenbereich</h4>
+      <div class="grid-4">
+        <div class="param-group">
+          <label>KV/PV-Abzugssatz (%)<br><span style="font-weight:normal;font-size:7pt">Spalte KV/PV in der Tabelle</span></label>
+          <input type="number" id="kvpv" value="12.35" step="0.05" min="5" max="25">
+        </div>
+        <div class="param-group">
+          <label>Rentenwachstum pro Monat Aufschub (€)<br><span style="font-weight:normal;font-size:7pt">auto aus A+B abgeleitet; manuell überschreibbar</span></label>
+          <input type="number" id="wachstum" value="6.07" step="0.01" min="0">
+        </div>
+        <div class="param-group">
+          <label>Tabelle ab Monat<br><span style="font-weight:normal;font-size:7pt">frühestmögl. Renteneintritt langjährig Versicherte</span></label>
+          <input type="month" id="von" value="2031-10">
+        </div>
+        <div class="param-group">
+          <label>Tabelle bis Monat</label>
+          <input type="month" id="bis" value="2036-10">
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="kennzahlen" id="kennzahlen"></div>
+
+  <div class="tabelle-wrapper">
+    <table class="drv">
+      <thead>
+        <tr>
+          <th style="width:12%">Renten&#173;beginn</th>
+          <th style="width:7%">Alter<br>J / M</th>
+          <th style="width:9%">Bruttorente<br>nach Abschlag (€)</th>
+          <th style="width:8%">KV/PV &#8722;<span id="hdr-kvpv">12,35</span>&thinsp;% (€)</th>
+          <th style="width:9%">Zahlbetrag<br>v. Steuern (€)</th>
+          <th style="width:8%">Zu-/Abschlag<br>in&thinsp;%</th>
+          <th style="width:8%">Zu-/Abschlag<br>in&thinsp;€&thinsp;/&thinsp;Mon.</th>
+          <th style="width:11%">Beitrag Ausgleich<br>&#167;&thinsp;187a SGB VI (€)</th>
+          <th style="width:8%">Steuer&#173;anteil<br>&#167;&thinsp;22 EStG</th>
+        </tr>
+      </thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+  </div>
+
+  <div class="legende no-print">
+    <div class="legende-item">
+      <div class="legende-box" style="background:#fff3cd;border:2px solid #e6a800;"></div>
+      <span>Geplanter Rentenbeginn (01.12.2034)</span>
+    </div>
+    <div class="legende-item">
+      <div class="legende-box" style="background:#d4edda;border:2px solid #28a745;"></div>
+      <span>Abschlagsfreie Rente (01.10.2035)</span>
+    </div>
+    <div class="legende-item" style="color:#1a5c8f;">
+      <strong>blau</strong>&ensp;= Zuschlag (nach Regelalter)
+    </div>
+    <div style="margin-left:auto;font-size:7pt;color:#888;">
+      Break-even Ausgleich: <strong id="breakeven">–</strong>
+    </div>
+  </div>
+
+  <div class="analyse" id="analyse-box">
+    <h4>Analyse: Geplanter Rentenbeginn 01.12.2034</h4>
+    <table id="analyse-tabelle"></table>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Hinweis:</strong> Diese Vorausberechnung ist <strong>nicht rechtsverbindlich</strong>.
+    Rechenlogik rekonstruiert und kalibriert an 5 Ankerpunkten des DRV-Beratungsausdrucks vom 13.07.2026 (Abweichung ±1&thinsp;€).
+    Das Rentenwachstum wird automatisch aus den drei Rentenauskunft-Werten und dem ATZ-Beginn abgeleitet
+    (r<sub>ATZ</sub> = (R<sub>ATZ-Sim</sub> – R<sub>aktuell</sub> – n<sub>voll</sub>·r<sub>voll</sub>) / n<sub>ATZ</sub>).
+    Für belastbare Werte: Deutsche Rentenversicherung Baden-Württemberg, Telefon 0711&thinsp;848-0.
+  </div>
+
+</div>
+
+<script>
+const GEBURTSDATUM   = new Date(1968,8,26);
+const REGELRENTENBEG = new Date(2035,9,1);
+const STEUERANTEIL   = {2031:86.5,2032:87.0,2033:87.5,2034:88.0,2035:88.5,2036:89.0,2037:89.0,2038:89.0,2039:89.0};
+
+function monateDiff(d1,d2){return(d2.getFullYear()-d1.getFullYear())*12+(d2.getMonth()-d1.getMonth());}
+function parseMonat(s){const t=s.split('-');return new Date(parseInt(t[0]),parseInt(t[1])-1,1);}
+function alterBei(d){
+  // Volle Monate erst nach Geburtstagsdatum (wie DRV-Tabelle und relativedelta)
+  const j=d.getFullYear()-GEBURTSDATUM.getFullYear();
+  const dm=d.getMonth()-GEBURTSDATUM.getMonth();
+  const dd=d.getDate()-GEBURTSDATUM.getDate();
+  const jahre=(dm<0||(dm===0&&dd<0))?j-1:j;
+  const anker=new Date(GEBURTSDATUM.getFullYear()+jahre,GEBURTSDATUM.getMonth(),GEBURTSDATUM.getDate());
+  let md=monateDiff(anker,d);
+  // Wenn Tag noch nicht erreicht: einen Monat abziehen
+  if(d.getDate()<GEBURTSDATUM.getDate())md=Math.max(0,md-1);
+  return{jahre,monate:md};
+}
+function fmtDE(n,dez=0){return n.toLocaleString('de-DE',{minimumFractionDigits:dez,maximumFractionDigits:dez});}
+function fmtDatum(d){return String(d.getDate()).padStart(2,'0')+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+d.getFullYear();}
+function istGeplant(d){return d.getFullYear()===2034&&d.getMonth()===11;}
+function istAbschlagsfrei(d){return d.getFullYear()===2035&&d.getMonth()===9;}
+
+// ─── Rentenwachstum auto-ableiten ────────────────────────────────────────────
+// Exakte Formel aus den 3 DRV-Werten + ATZ-Beginn:
+//   r_voll = (R_hoch - R_aktuell) / n_gesamt          [Wachstum bei Vollentgelt / Monat]
+//   r_atz  = (R_atz_sim - R_aktuell - n_voll*r_voll) / n_atz   [Wachstum bei ATZ-Entgelt]
+// n_gesamt = 01.01.2026 → 01.10.2035 = 117 Monate
+// n_voll   = 01.01.2026 → ATZ-Beginn  (z.B. 11 Mon. bei 01.12.2026)
+// n_atz    = ATZ-Beginn → 01.10.2035  (z.B. 106 Mon.)
+function berechneWachstum(p){
+  const proj=new Date(2026,0,1);
+  const atz=parseMonat(p.atz_beginn);
+  const n_ges=monateDiff(proj,REGELRENTENBEG);
+  const n_vol=monateDiff(proj,atz);
+  const n_atz=monateDiff(atz,REGELRENTENBEG);
+  if(n_atz<=0||n_ges<=0)return{r_voll:0,r_atz:0,regelrente_auto:0,n_vol,n_atz};
+  const r_voll=(p.rente_hoch-p.rente_aktuell)/n_ges;
+  const r_atz=(p.regelrente-p.rente_aktuell-n_vol*r_voll)/n_atz;
+  const r_atz_nae=r_voll*(p.atz_pct/100);
+  const ra=Math.round(p.rente_aktuell+n_vol*r_voll+n_atz*r_atz_nae);
+  return{r_voll,r_atz,regelrente_auto:ra,n_vol,n_atz};
+}
+
+// ─── Beitrag Ausgleich §187a: exakte DRV-Werte (Beratungsausdruck 13.07.2026) ──
+const AUSGLEICH_LOOKUP = {
+  "2031-10-01":113424,"2031-11-01":110894,"2031-12-01":108371,
+  "2032-01-01":105896,"2032-02-01":103386,"2032-03-01":100882,
+  "2032-04-01": 98386,"2032-05-01": 95932,"2032-06-01": 93448,
+  "2032-07-01": 90972,"2032-08-01": 88535,"2032-09-01": 86071,
+  "2032-10-01": 83645,"2032-11-01": 81194,"2032-12-01": 78779,
+  "2033-01-01": 76369,"2033-02-01": 73938,"2033-03-01": 71540,
+  "2033-04-01": 69147,"2033-05-01": 66759,"2033-06-01": 64354,
+  "2033-07-01": 61978,"2033-08-01": 59608,"2033-09-01": 57243,
+  "2033-10-01": 54883,"2033-11-01": 52529,"2033-12-01": 50181,
+  "2034-01-01": 47838,"2034-02-01": 45501,"2034-03-01": 43170,
+  "2034-04-01": 40845,"2034-05-01": 38538,"2034-06-01": 36223,
+  "2034-07-01": 33915,"2034-08-01": 31612,"2034-09-01": 29324,
+  "2034-10-01": 27032,"2034-11-01": 24754,"2034-12-01": 22474,
+  "2035-01-01": 20199,"2035-02-01": 17936,"2035-03-01": 15678,
+  "2035-04-01": 13420,"2035-05-01": 11171,"2035-06-01":  8925,
+  "2035-07-01":  6686,"2035-08-01":  4453,"2035-09-01":  2224,
+};
+
+// ─── Einzelzeile ─────────────────────────────────────────────────────────────
+function berechneZeile(rentenbeginn,regelrente,kvpv,wachstum){
+  const delta=monateDiff(rentenbeginn,REGELRENTENBEG);
+  let abschlagPct,bruttorente;
+  if(delta>0){
+    abschlagPct=-(delta*0.3);
+    bruttorente=Math.round((regelrente-delta*wachstum)*(1+abschlagPct/100));
+  }else if(delta===0){
+    abschlagPct=0;
+    bruttorente=Math.round(regelrente);
+  }else{
+    const zm=-delta;
+    abschlagPct=zm*0.5;
+    bruttorente=Math.round((regelrente+zm*wachstum)*(1+abschlagPct/100));
+  }
+  const kvpvEur=Math.round(bruttorente*kvpv);
+  const zahlbetrag=bruttorente-kvpvEur;
+  let abschlagEur;
+  if(delta>0)      abschlagEur=Math.round(bruttorente-(regelrente-delta*wachstum));
+  else if(delta<0) abschlagEur=Math.round(bruttorente-(regelrente+(-delta)*wachstum));
+  else             abschlagEur=0;
+  let beitragAusgleich=0;
+  if(delta>0){
+    const iso=rentenbeginn.getFullYear()+'-'+String(rentenbeginn.getMonth()+1).padStart(2,'0')+'-'+String(rentenbeginn.getDate()).padStart(2,'0');
+    if(iso in AUSGLEICH_LOOKUP){
+      beitragAusgleich=AUSGLEICH_LOOKUP[iso];
+    }else{
+      // Fallback-Näherung für Daten außerhalb der Lookup-Tabelle
+      const alterJ=(rentenbeginn-GEBURTSDATUM)/(365.25*24*3600*1000);
+      beitragAusgleich=Math.round(Math.abs(abschlagEur)*12*Math.max(0,82-alterJ)*0.82/12*12);
+    }
+  }
+  const steueranteil=STEUERANTEIL[rentenbeginn.getFullYear()]||89.0;
+  const alter=alterBei(rentenbeginn);
+  return{datum:rentenbeginn,alterJahre:alter.jahre,alterMonate:alter.monate,
+         bruttorente,kvpvEur:-kvpvEur,zahlbetrag,
+         abschlagPct:Math.round(abschlagPct*10)/10,abschlagEur,beitragAusgleich,steueranteil};
+}
+
+// ─── Hauptfunktion ───────────────────────────────────────────────────────────
+function berechne(){
+  const p={
+    rente_aktuell: parseFloat(document.getElementById('rente_aktuell').value)||2542.43,
+    rente_hoch:    parseFloat(document.getElementById('rente_hoch').value)||3360,
+    entgeltpunkte: parseFloat(document.getElementById('entgeltpunkte').value)||59.7937,
+    rentenwert:    parseFloat(document.getElementById('rentenwert').value)||42.52,
+    jahresbrutto:  parseFloat(document.getElementById('jahresbrutto').value)||95975,
+    atz_beginn:    document.getElementById('atz_beginn').value||'2026-12',
+    atz_pct:       parseFloat(document.getElementById('atz_pct').value)||90,
+    regelrente:    parseFloat(document.getElementById('regelrente').value)||3259,
+    kvpv:          parseFloat(document.getElementById('kvpv').value)/100||0.1235,
+    von:           document.getElementById('von').value||'2031-10',
+    bis:           document.getElementById('bis').value||'2036-10',
+  };
+
+  // ATZ-Entgelt auto
+  const atz_m=p.jahresbrutto*(p.atz_pct/100)/12;
+  document.getElementById('atz_monat_anzeige').textContent=fmtDE(atz_m,2)+' €';
+
+  // Wachstum ableiten
+  const w=berechneWachstum(p);
+  document.getElementById('rente_steigerung_anzeige').textContent=
+    w.r_voll>0?'ca. '+fmtDE(w.r_voll*12,0)+' €/Jahr ('+fmtDE(w.r_voll,2)+' €/Mon.)':'–';
+
+  // Wachstum nur übernehmen wenn Feld nicht manuell verändert wurde
+  const wFeld=document.getElementById('wachstum');
+  if(!wFeld.dataset.manuell&&w.r_atz>0&&w.r_atz<20){
+    wFeld.value=fmtDE(w.r_atz,2).replace(',','.');
+  }
+  p.wachstum=parseFloat(wFeld.value)||6.07;
+
+  // Auto-Regelrente + Warnung
+  document.getElementById('regelrente_auto').textContent=
+    w.regelrente_auto?fmtDE(w.regelrente_auto,0)+' €':'–';
+  const abw=Math.abs(w.regelrente_auto-p.regelrente);
+  const warn=document.getElementById('abweich_warn');
+  warn.style.display=abw>30?'':'none';
+  if(abw>30)warn.textContent='Abweichung: Auto-Näherung ergibt '+fmtDE(w.regelrente_auto,0)+' €, eingetragen sind '+fmtDE(p.regelrente,0)+' € (Diff. '+fmtDE(abw,0)+' €). Bitte DRV-Simulationswert direkt eintragen.';
+
+  document.getElementById('hdr-kvpv').textContent=(p.kvpv*100).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2});
+
+  // Tabelle berechnen
+  const von=parseMonat(p.von),bis=parseMonat(p.bis);
+  const zeilen=[];
+  let d=new Date(von);
+  while(d<=bis){zeilen.push(berechneZeile(new Date(d),p.regelrente,p.kvpv,p.wachstum));d.setMonth(d.getMonth()+1);}
+
+  // Rendern
+  const tbody=document.getElementById('tbl-body');
+  tbody.innerHTML='';
+  zeilen.forEach(z=>{
+    const tr=document.createElement('tr');
+    if(istGeplant(z.datum))tr.className='geplant';
+    else if(istAbschlagsfrei(z.datum))tr.className='abschlagsfrei';
+    else if(z.abschlagPct<0)tr.className='abschlag';
+    else if(z.abschlagPct>0)tr.className='zuschlag';
+    const ap=z.abschlagPct===0?'<span class="null">0,0&thinsp;%</span>':
+      z.abschlagPct<0?`<span class="neg">${fmtDE(z.abschlagPct,1)}&thinsp;%</span>`:
+      `<span class="pos">+${fmtDE(z.abschlagPct,1)}&thinsp;%</span>`;
+    const ae=z.abschlagEur===0?'<span class="null">–</span>':
+      z.abschlagEur<0?`<span class="neg">${fmtDE(z.abschlagEur)}</span>`:
+      `<span class="pos">+${fmtDE(z.abschlagEur)}</span>`;
+    const ag=z.beitragAusgleich>0?fmtDE(z.beitragAusgleich):'<span class="null">–</span>';
+    tr.innerHTML=`<td>${fmtDatum(z.datum)}</td><td>${z.alterJahre}&thinsp;J&thinsp;${z.alterMonate}&thinsp;M</td>
+      <td><strong>${fmtDE(z.bruttorente)}</strong></td><td class="neg">${fmtDE(z.kvpvEur)}</td>
+      <td><strong>${fmtDE(z.zahlbetrag)}</strong></td><td>${ap}</td><td>${ae}</td><td>${ag}</td>
+      <td>${fmtDE(z.steueranteil,1)}&thinsp;%</td>`;
+    tbody.appendChild(tr);
+  });
+
+  // Kennzahlen
+  const renteAktuellCalc=p.entgeltpunkte*p.rentenwert;
+  const gZ=zeilen.find(z=>istGeplant(z.datum));
+  const rZ=zeilen.find(z=>istAbschlagsfrei(z.datum));
+  document.getElementById('kennzahlen').innerHTML=`
+    <div class="kz-box"><div class="kz-label">Regelrente aktuell (ohne Hochrechnung)</div>
+      <div class="kz-wert">${fmtDE(renteAktuellCalc,2)} €</div>
+      <div class="kz-sub">${fmtDE(p.entgeltpunkte,4)} EP × ${fmtDE(p.rentenwert,2)} €/Punkt</div></div>
+    <div class="kz-box hl-gelb"><div class="kz-label">Geplanter Rentenbeginn 01.12.2034 (ATZ-Simulation, &#8722;3,0&thinsp;%)</div>
+      <div class="kz-wert">${gZ?fmtDE(gZ.bruttorente)+' € brutto':'(außerhalb Zeitraum)'}</div>
+      <div class="kz-sub">${gZ?'Zahlbetrag nach KV/PV: '+fmtDE(gZ.zahlbetrag)+' €':''}</div></div>
+    <div class="kz-box hl-gruen"><div class="kz-label">Abschlagsfreie Rente 01.10.2035 (ATZ-Simulation, 0,0&thinsp;%)</div>
+      <div class="kz-wert">${rZ?fmtDE(rZ.bruttorente)+' € brutto':'(außerhalb Zeitraum)'}</div>
+      <div class="kz-sub">${rZ?'Zahlbetrag nach KV/PV: '+fmtDE(rZ.zahlbetrag)+' €':''}</div></div>`;
+
+  // Analyse
+  if(gZ&&rZ){
+    const absMon=Math.abs(gZ.abschlagEur);
+    const ausgl=gZ.beitragAusgleich;
+    const be=absMon>0?Math.round(ausgl/absMon):null;
+    const beJ=be?2034+Math.floor((12+be)/12):null;
+    document.getElementById('breakeven').textContent=be?`${be} Monate (Alter ca. ${(66+2/12+be/12).toFixed(1)} J. / ~${beJ})`:'–';
+    document.getElementById('analyse-tabelle').innerHTML=`
+      <tr><td>Bruttorente 01.12.2034 (ATZ-Szenario, &#8722;3,0&thinsp;%)</td><td>${fmtDE(gZ.bruttorente)} €/Monat</td></tr>
+      <tr><td>Dauerhafter Abschlag (&#8722;3,0&thinsp;% = &#8722;10 Mon. × 0,3&thinsp;%)</td><td class="neg">&#8722;${fmtDE(absMon)} €/Monat</td></tr>
+      <tr><td>KV/PV-Abzug (${fmtDE(p.kvpv*100,2)}&thinsp;%)</td><td class="neg">${fmtDE(gZ.kvpvEur)} €/Monat</td></tr>
+      <tr><td>Zahlbetrag vor Steuern</td><td><strong>${fmtDE(gZ.zahlbetrag)} €/Monat</strong></td></tr>
+      <tr><td>Ausgleichszahlung &#167;&thinsp;187a SGB VI</td><td><strong>${fmtDE(ausgl)} €</strong></td></tr>
+      <tr><td>Break-even (Amortisation)</td><td><strong>${be?be+' Mon. ≈ Alter '+(66+2/12+be/12).toFixed(0)+' J. (ca. '+beJ+')':'–'}</strong></td></tr>
+      <tr><td>Vergleich: Rente 01.10.2035 (abschlagsfrei)</td><td>${fmtDE(rZ.bruttorente)} €/Monat brutto</td></tr>
+      <tr><td>Vorteil: 10 Monate frühere Rente</td><td class="pos">+${fmtDE(gZ.zahlbetrag)} × 10 = +${fmtDE(gZ.zahlbetrag*10)} €</td></tr>`;
+    document.getElementById('analyse-box').style.display='';
+  }else{
+    document.getElementById('analyse-box').style.display='none';
+    document.getElementById('breakeven').textContent='(Datum außerhalb Zeitraum)';
+  }
+  window._tabellenDaten=zeilen;
+}
+
+function exportCSV(){
+  const d=window._tabellenDaten;if(!d)return;
+  const hdr=['Rentenbeginn','Alter_Jahre','Alter_Monate','Bruttorente_EUR','KV_PV_EUR',
+             'Zahlbetrag_EUR','Abschlag_Pct','Abschlag_EUR','Beitrag_Ausgleich_EUR','Steueranteil_Pct'].join(',');
+  const rows=d.map(z=>[fmtDatum(z.datum),z.alterJahre,z.alterMonate,z.bruttorente,z.kvpvEur,
+    z.zahlbetrag,z.abschlagPct,z.abschlagEur,z.beitragAusgleich,z.steueranteil].join(','));
+  const blob=new Blob(['\uFEFF'+hdr+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='Rentenberechnung_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// Wachstum-Feld: manuell-Flag setzen
+document.getElementById('wachstum').addEventListener('input',()=>{
+  document.getElementById('wachstum').dataset.manuell='1';
+});
+// Bei Änderung in Gruppe A/B: Wachstum neu ableiten
+['rente_aktuell','rente_hoch','regelrente','atz_beginn','atz_pct'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',()=>{
+    document.getElementById('wachstum').dataset.manuell='';berechne();
+  });
+});
+document.querySelectorAll('input[type=number], input[type=month]').forEach(el=>{
+  if(!['rente_aktuell','rente_hoch','regelrente','atz_beginn','atz_pct'].includes(el.id))
+    el.addEventListener('change',berechne);
+});
+berechne();
+</script>
+<script>
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('✓ Service Worker registered'))
+    .catch(err => console.log('✗ Service Worker registration failed:', err));
+}
+
+console.log('ATZ Dashboard initialized');
+
+</script>
+</body>
+</html>

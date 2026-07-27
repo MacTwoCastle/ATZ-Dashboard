@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -8,6 +8,14 @@
 <meta name="apple-mobile-web-app-title" content="ATZ Planung">
 <meta name="theme-color" content="#003b6e">
 <title>ATZ Planung</title>
+
+<!-- PWA Manifest -->
+<link rel="manifest" href="./manifest.json">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="./icons/icon-192x192.png">
+<link rel="icon" type="image/png" href="./icons/icon-192x192.png">
+
 <style>
   :root {
     --tk: #e20074;
@@ -843,7 +851,7 @@
         <div class="row"><span>DRV-Vorausberechnung</span><span class="val">13.07.2026</span></div>
         <div class="row"><span>ATZ-Prognose (maßgeblich)</span><span class="val">29.06.2026 · HRDE-1005457279_00313912</span></div>
         <div class="row"><span>Kapitalkontenplan (Stand)</span><span class="val">28.06.2026</span></div>
-        <div class="row"><span>Rentenrechner</span><span class="val">Rentenrechner.py · Rentenrechner.html</span></div>
+        <div class="row"><span>Rentenrechner</span><span class="val"><a href="./Rentenrechner.html" style="color:var(--dk2);text-decoration:none;font-weight:600;">Rentenrechner öffnen ↗</a></span></div>
         <div class="row"><span>§ 36 SGB VI</span><span class="val">Altersrente langjährig Versicherte</span></div>
         <div class="row"><span>§ 187a SGB VI</span><span class="val">Ausgleichszahlungen Abschläge</span></div>
         <div class="row"><span>§ 22 Nr. 1 EStG</span><span class="val">Steueranteil Rente (88 % Kohorte 2034)</span></div>
@@ -1168,23 +1176,26 @@ window.addEventListener('beforeinstallprompt', e => {
 
 <!-- Web App Manifest (inline via link) -->
 <script>
-const manifest = {
-  name: 'ATZ Planung – Dr. Steffen Steinhäuser',
-  short_name: 'ATZ Planung',
-  description: 'Altersteilzeit & Rentenplanung',
-  start_url: '.',
-  display: 'standalone',
-  background_color: '#f5f5f7',
-  theme_color: '#003b6e',
-  icons: [{
-    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="%23003b6e"/><text y="68" x="50" text-anchor="middle" font-size="58" fill="white">€</text></svg>',
-    sizes: '192x192', type: 'image/svg+xml'
-  }]
-};
-const blob2 = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-const lnk = document.createElement('link');
-lnk.rel = 'manifest'; lnk.href = URL.createObjectURL(blob2);
-document.head.appendChild(lnk);
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('✓ Service Worker registered'))
+    .catch(err => console.log('✗ Service Worker registration failed:', err));
+}
+
+console.log('ATZ-Dashboard initialized');
+
+</script>
+<script>
+// Service Worker Registration for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js')
+    .then(reg => console.log('✓ Service Worker registered'))
+    .catch(err => console.log('✗ Service Worker registration failed:', err));
+}
+
+console.log('ATZ Dashboard initialized');
+
 </script>
 </body>
 </html>

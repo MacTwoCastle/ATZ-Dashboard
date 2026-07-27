@@ -1,0 +1,68 @@
+{
+  "name": "ATZ Planung - Altersteilzeit Dashboard",
+  "short_name": "ATZ Planung",
+  "description": "Persönliches Dashboard für Altersteilzeit-Planung und Finanzübersicht",
+  "start_url": "./ATZ-Dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#003b6e",
+  "background_color": "#f5f5f7",
+  "icons": [
+    {
+      "src": "./icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon-192x192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "./icons/icon-512x512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "./screenshots/screenshot-540x720.png",
+      "type": "image/png",
+      "sizes": "540x720",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "./screenshots/screenshot-1280x720.png",
+      "type": "image/png",
+      "sizes": "1280x720",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["finance", "productivity"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard anzeigen",
+      "short_name": "Dashboard",
+      "description": "Öffne das ATZ-Dashboard",
+      "url": "./ATZ-Dashboard.html",
+      "icons": [
+        {
+          "src": "./icons/icon-192x192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
