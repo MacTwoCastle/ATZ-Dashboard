@@ -1,7 +1,7 @@
 // Service Worker für ATZ-Dashboard PWA
 // Offline-Unterstützung und Cache-Strategie
 
-const CACHE_NAME = 'atz-dashboard-v1';
+const CACHE_NAME = 'atz-dashboard-v4';
 const ASSETS_TO_CACHE = [
   './',
   './ATZ-Dashboard.html',

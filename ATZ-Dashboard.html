@@ -10,11 +10,11 @@
 <title>ATZ Planung</title>
 
 <!-- PWA Manifest -->
-<link rel="manifest" href="./github/manifest.json">
+<link rel="manifest" href="./manifest.json">
 
 <!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" href="./github/icons/icon-192x192.png">
-<link rel="icon" type="image/png" href="./github/icons/icon-192x192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192x192.png">
+<link rel="icon" type="image/png" href="./icons/icon-192x192.png">
 
 <style>
   :root {
@@ -172,6 +172,18 @@
   .formula { background: #f0f4f8; border-radius: 10px; padding: 10px 14px;
              font-family: "Courier New", monospace; font-size: 13px; color: var(--dk);
              margin: 8px 0; overflow-x: auto; }
+
+  /* ── Countdown ── */
+  .countdown { background: linear-gradient(135deg, var(--tk) 0%, #a8005a 100%); color: #fff;
+               border-radius: 14px; padding: 16px; margin: 12px 0; box-shadow: 0 2px 8px rgba(226,0,116,.25); }
+  .cd-label { font-size: 13px; font-weight: 600; opacity: .9; text-transform: uppercase; letter-spacing: .4px; }
+  .cd-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 8px; text-align: center; }
+  .cd-box { background: rgba(255,255,255,.16); border-radius: 10px; padding: 8px 4px; }
+  .cd-box span { display: block; font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cd-box small { font-size: 11px; opacity: .85; }
+  .cd-sub { font-size: 12px; opacity: .9; line-height: 1.4; }
+  .cd-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.25); margin-top: 10px; overflow: hidden; }
+  .cd-bar div { height: 100%; width: 0; background: #fff; border-radius: 3px; transition: width .6s; }
 </style>
 </head>
 <body>
@@ -182,13 +194,25 @@
 <div id="p-overview" class="page active">
   <div class="page-hdr">
     <h1>ATZ Planung</h1>
-    <p>Stand: 31.07.2026 · Dr. Steffen Steinhäuser</p>
+    <p>Stand: 07.10.2026 · Dr. Steffen Steinhäuser</p>
   </div>
   <div class="scroll">
 
+    <!-- Countdown bis zur passiven ATZ-Phase -->
+    <div class="countdown" id="countdown" role="timer" aria-live="off">
+      <div class="cd-label" id="cd-label">Passive Phase beginnt in</div>
+      <div class="cd-grid">
+        <div class="cd-box"><span id="cd-d">–</span><small>Tage</small></div>
+        <div class="cd-box"><span id="cd-h">–</span><small>Stunden</small></div>
+        <div class="cd-box"><span id="cd-m">–</span><small>Minuten</small></div>
+      </div>
+      <div class="cd-sub" id="cd-sub"></div>
+      <div class="cd-bar"><div id="cd-fill"></div></div>
+    </div>
+
     <div class="alert alert-ok" style="margin-top:12px;">
-      <strong>✅ ATZ-Antrag genehmigt</strong>
-      FK + HR, 15.07.2026 · Vertrag kommt postalisch vor 01.12.2026 · <em>Warten auf Vertragseingang zur Unterschrift</em>
+      <strong>✅ ATZ genehmigt und Vertrag unterschrieben</strong>
+      FK + HR, 15.07.2026 · Eingang des unterschriebenen Vertrags von HR am 07.10.2026 bestätigt · <em>Umsetzung läuft, aktive Phase startet am 01.12.2026</em>
     </div>
 
     <div class="alert alert-info" style="margin-bottom:0;">
@@ -215,7 +239,7 @@
       </div>
       <div class="kpi green">
         <div class="kpi-label">Netto Rente Basis</div>
-        <div class="kpi-value">6.149 €</div>
+        <div class="kpi-value">6.102 €</div>
         <div class="kpi-sub">mit bAV + Kapital 2.300 €</div>
       </div>
       <div class="kpi">
@@ -236,14 +260,14 @@
       <div class="row"><span>Vollzeit (bis 11/2026)</span><span class="val">5.958 € netto</span></div>
       <div class="row"><span>ATZ aktiv (12/2026–11/2030)</span><span class="val">5.513 € netto</span></div>
       <div class="row"><span>ATZ passiv (12/2030–11/2034)</span><span class="val">5.513 € netto</span></div>
-      <div class="row"><span style="color:var(--tk);font-weight:600;">Rente ab 12/2034 (Basis)</span><span class="val" style="color:var(--tk);">6.149 € netto</span></div>
-      <div class="row muted"><span><em>(Ref. abschlagsfrei ab 10/2035)</em></span><span class="val"><em>6.949 €</em></span></div>
+      <div class="row"><span style="color:var(--tk);font-weight:600;">Rente ab 12/2034 (Basis)</span><span class="val" style="color:var(--tk);">6.102 € netto</span></div>
+      <div class="row muted"><span><em>(Ref. abschlagsfrei ab 10/2035)</em></span><span class="val"><em>6.903 €</em></span></div>
     </div>
 
     <!-- Wichtige Risiken -->
     <div class="alert alert-warn">
       <strong>⚠️ Wichtig: Offene Punkte</strong>
-      Steuerberater konsultieren · Clerical Medical Modellrechnung für 12/2034 anfordern · Liquiditätsbedarf konkret ermitteln
+      Steuerberater konsultieren · Steuererklärung (Progressionsvorbehalt) klären · TKK über ATZ-Beginn informieren · TPF-Entgeltumwandlung klären · Clerical Medical Rückfrage Modellrechnung für 12/2034 · Kapitalplanung mit dem Banker abstimmen · Liquiditätsbedarf konkret ermitteln
     </div>
 
     <div class="card">
@@ -283,14 +307,14 @@
       <div class="row"><span>DRV netto (3.102 €)</span><span class="val" id="sc-drv">2.419,56 €</span></div>
       <div class="row"><span>bAV netto (1.783,49 €)</span><span class="val" id="sc-bav">1.105,76 €</span></div>
       <div class="row"><span>Kapital netto (2.300 €)</span><span class="val" id="sc-kap">1.656,00 €</span></div>
-      <div class="row"><span>Rürup netto</span><span class="val" id="sc-ruerup">112,32 €</span></div>
+      <div class="row"><span>Rürup netto</span><span class="val" id="sc-ruerup">109,20 €</span></div>
       <div class="row"><span style="color:var(--muted);">+ Riester netto <em>(ab 10/2035)</em></span><span class="val" id="sc-riester" style="color:var(--muted);">97,50 €</span></div>
       <div class="row" style="border-top:2px solid var(--dk);margin-top:4px;padding-top:8px;">
         <span style="font-weight:700;font-size:15px;">Gesamt (ohne Riester)</span>
-        <span class="val" id="sc-total" style="font-size:18px;color:var(--dk);">5.293,64 €</span>
+        <span class="val" id="sc-total" style="font-size:18px;color:var(--dk);">5.290,52 €</span>
       </div>
       <div class="row"><span style="color:var(--muted);font-size:13px;">Mit Riester</span>
-        <span class="val" id="sc-total-r" style="color:var(--muted);font-size:13px;">5.391,14 €</span></div>
+        <span class="val" id="sc-total-r" style="color:var(--muted);font-size:13px;">5.388,02 €</span></div>
     </div>
 
     <details>
@@ -300,9 +324,9 @@
         <div class="tbl-wrap">
         <table>
           <tr><th>Stufe</th><th class="num">DRV netto</th><th class="num">Gesamt (m. Riester)</th></tr>
-          <tr><td>Konservativ</td><td class="num">3.065 €</td><td class="num">6.037 €</td></tr>
-          <tr><td>Basis</td><td class="num">3.301 €</td><td class="num">6.949 €</td></tr>
-          <tr><td>Optimistisch</td><td class="num">3.498 €</td><td class="num">7.607 €</td></tr>
+          <tr><td>Konservativ</td><td class="num">3.065 €</td><td class="num">6.034 €</td></tr>
+          <tr><td>Basis</td><td class="num">3.301 €</td><td class="num">6.903 €</td></tr>
+          <tr><td>Optimistisch</td><td class="num">3.498 €</td><td class="num">7.536 €</td></tr>
         </table>
         </div>
       </div>
@@ -322,8 +346,8 @@
         <tr><td>Vor ATZ (Ziel 100 %)</td><td class="num">11.393 €</td><td class="num">~7.219 €</td></tr>
         <tr><td>ATZ aktiv (12/26–11/30)</td><td class="num">5.696 €</td><td class="num bold">5.513 €</td></tr>
         <tr><td>ATZ passiv (12/30–11/34)</td><td class="num">5.696 €</td><td class="num bold">5.513 €</td></tr>
-        <tr style="background:#e8f5e9;"><td><strong>Rente ab 12/2034 (Basis, m. bAV)</strong></td><td class="num bold">7.726 €</td><td class="num bold" style="color:var(--ok);">~6.149 €</td></tr>
-        <tr class="muted"><td><em>(Ref. abschlagsfrei, Basis)</em></td><td class="num"><em>8.679 €</em></td><td class="num"><em>6.949 €</em></td></tr>
+        <tr style="background:#e8f5e9;"><td><strong>Rente ab 12/2034 (Basis, m. bAV)</strong></td><td class="num bold">7.671 €</td><td class="num bold" style="color:var(--ok);">~6.102 €</td></tr>
+        <tr class="muted"><td><em>(Ref. abschlagsfrei, Basis)</em></td><td class="num"><em>8.624 €</em></td><td class="num"><em>6.903 €</em></td></tr>
       </tbody>
     </table>
     </div>
@@ -338,10 +362,10 @@
           <tr><th>Quelle</th><th class="num">Netto</th></tr>
           <tr><td>DRV Basis</td><td class="num">2.605,68 €</td></tr>
           <tr><td>bAV Basis (konservativ 40 %)</td><td class="num">1.070,09 €</td></tr>
-          <tr><td>Rürup Basis</td><td class="num">454,44 €</td></tr>
-          <tr><td><strong>Summe ohne Kapital</strong></td><td class="num bold">4.130,21 €</td></tr>
-          <tr style="background:#fff8c5;"><td><strong>Finanzlücke zu Fixgehalt</strong></td><td class="num bold" style="color:var(--err);">−1.827 €</td></tr>
-          <tr style="background:#e8f5e9;"><td><strong>→ KAP_brutto (÷ 0,80)</strong></td><td class="num bold" style="color:var(--ok);">2.300 €</td></tr>
+          <tr><td>Rürup Basis</td><td class="num">408,24 €</td></tr>
+          <tr><td><strong>Summe ohne Kapital</strong></td><td class="num bold">4.084,01 €</td></tr>
+          <tr style="background:#fff8c5;"><td><strong>Finanzlücke zu Fixgehalt</strong></td><td class="num bold" style="color:var(--err);">−1.874 €</td></tr>
+          <tr style="background:#e8f5e9;"><td><strong>→ KAP_brutto (÷ 0,80)</strong></td><td class="num bold" style="color:var(--ok);">2.342 € → gewählt 2.300 €</td></tr>
           <tr><td><strong>→ KAP_netto</strong></td><td class="num bold">1.840 €</td></tr>
         </table>
         </div>
@@ -423,9 +447,9 @@
         <table>
           <thead><tr><th>Stufe</th><th class="num">Netto/Monat</th><th class="num">m. Riester</th></tr></thead>
           <tbody>
-            <tr><td>Konservativ</td><td class="num">5.939 €</td><td class="num">6.037 €</td></tr>
-            <tr style="background:#e8f0f8;"><td><strong>Basis</strong></td><td class="num bold">6.844 €</td><td class="num bold">6.949 €</td></tr>
-            <tr><td>Optimistisch</td><td class="num">7.495 €</td><td class="num">7.607 €</td></tr>
+            <tr><td>Konservativ</td><td class="num">5.936 €</td><td class="num">6.034 €</td></tr>
+            <tr style="background:#e8f0f8;"><td><strong>Basis</strong></td><td class="num bold">6.798 €</td><td class="num bold">6.903 €</td></tr>
+            <tr><td>Optimistisch</td><td class="num">7.425 €</td><td class="num">7.536 €</td></tr>
           </tbody>
         </table>
         </div>
@@ -451,7 +475,15 @@
         <div class="tl-content">
           <div class="tl-date">15.07.2026 ✓</div>
           <div class="tl-title">ATZ-Antrag genehmigt</div>
-          <div class="tl-body">Führungskraft + HR Deutsche Telekom · Antragsnummer: HRDE-1005499916 · Vertrag folgt postalisch</div>
+          <div class="tl-body">Führungskraft + HR Deutsche Telekom · Antragsnummer: HRDE-1005499916</div>
+        </div>
+      </li>
+      <li>
+        <div class="tl-dot done"><span></span></div>
+        <div class="tl-content">
+          <div class="tl-date">07.10.2026 ✓</div>
+          <div class="tl-title">ATZ-Vertrag unterschrieben</div>
+          <div class="tl-body">Vertragsunterlagen von DTSE am 22.09.2026 · Eingang des unterschriebenen Vertrags von HR am 07.10.2026 bestätigt, Ablage in ePersA</div>
         </div>
       </li>
       <li>
@@ -459,7 +491,7 @@
         <div class="tl-content">
           <div class="tl-date">bis 01.12.2026</div>
           <div class="tl-title">Vorbereitungen abschließen</div>
-          <div class="tl-body">ATZ-Vertrag prüfen · Benefit Budget im Portal neu verteilen (LAZKO-Wegfall) · Tagesgeldpuffer auf 82.800 € aufbauen · Dauerauftrag 2.300 €/Monat einrichten</div>
+          <div class="tl-body">HR-Systemeintrag ab 20.10.2026 abwarten · TPF-Entgeltumwandlung klären · TKK informieren · Steuererklärung (Progressionsvorbehalt) klären · Tagesgeldpuffer auf 82.800 € aufbauen · Dauerauftrag 2.300 €/Monat einrichten</div>
         </div>
       </li>
       <li>
@@ -482,8 +514,8 @@
         <div class="tl-dot"><span></span></div>
         <div class="tl-content">
           <div class="tl-date">bis 30.11.2030</div>
-          <div class="tl-title">LAZKO + Langzeitkonto abbauen</div>
-          <div class="tl-body">Kein Übertrag in passive Phase möglich. Abstimmung mit Matthias Willert. Urlaub ebenfalls vollständig vor Passivphase abbauen.</div>
+          <div class="tl-title">Langzeitkonto prüfen / abbauen</div>
+          <div class="tl-body">Kein Übertrag in passive Phase möglich. LAZKO nur 20 € – unkritisch. Bei Langzeitkonto-Guthaben Abstimmung mit Matthias Willert. Urlaub ebenfalls vollständig vor Passivphase abbauen.</div>
         </div>
       </li>
       <li>
@@ -491,7 +523,7 @@
         <div class="tl-content">
           <div class="tl-date">01.12.2030</div>
           <div class="tl-title">ATZ – Passive Phase</div>
-          <div class="tl-body">Freistellung · gleiche Vergütungsstruktur · Gfz/Gfz-GUB klären · Laufzeit bis 30.11.2034</div>
+          <div class="tl-body">Freistellung · gleiche Vergütungsstruktur · Geräte und Unterlagen zurückgeben (30.11.2030) · Registrierung bei personalservice.telekom.com · Gfz/Gfz-GUB klären · Laufzeit bis 30.11.2034</div>
         </div>
       </li>
       <li>
@@ -531,12 +563,12 @@
     <!-- Gesetzliches Risiko -->
     <div class="alert alert-warn" style="margin-top:4px;">
       <strong>⚠️ Gesetzesrisiko Blockmodell</strong>
-      Bundesregierung plant Abschaffung des Blockmodells. ATZ-Antrag am 15.07.2026 genehmigt – <strong>5 Tage vor</strong> Bohle-E-Mail (20.07.2026). Vertrauensschutz durch Telekom bestätigt (31.07.2026). Kein Handlungsbedarf für diese Planung.
+      Bundesregierung plant Abschaffung des Blockmodells. ATZ-Antrag am 15.07.2026 genehmigt – <strong>5 Tage vor</strong> Bohle-E-Mail (20.07.2026), Vertrag inzwischen unterschrieben. Vertrauensschutz durch Telekom bestätigt (31.07.2026). Gesetzgebungsverfahren und HR-Informationen beobachten.
     </div>
 
     <div class="alert alert-info" style="margin-top:4px;">
-      <strong>📋 Aktueller Status: Warten auf ATZ-Vertrag</strong>
-      Interne Regelung am 31.07.2026 kommuniziert. HR prüft arbeitsrechtliche Voraussetzungen und versendet Vertrag postalisch (spätestens 3 Wochen vor 01.12.2026). <strong>Keine Abfindung</strong> in diesem Fall (ATZ-Ende Alter 66 &gt; frühestmögliche Rente mit 63).
+      <strong>📋 Aktueller Status: Vertrag unterschrieben – Umsetzung</strong>
+      Eingang des unterschriebenen Vertrags am 07.10.2026 von HR bestätigt. HR hinterlegt die ATZ frühestens 6 Wochen vor Beginn (ab 20.10.2026) in den Systemen; in den ersten Monaten können AZPR und Aufstockungsbeträge noch angepasst werden. Beginn vorbehaltlich fehlender rechtlicher Hinderungsgründe nach ATZG. <strong>Keine Abfindung</strong> in diesem Fall (ATZ-Ende Alter 66 &gt; frühestmögliche Rente mit 63).
     </div>
 
   </div>
@@ -548,26 +580,57 @@
 <div id="p-todos" class="page">
   <div class="page-hdr">
     <h1>To-dos & Aktionen</h1>
-    <p>Offene Punkte · Stand 31.07.2026</p>
+    <p>Offene Punkte · Stand 07.10.2026</p>
   </div>
   <div class="scroll" style="padding-top:16px;">
 
-    <div class="section-title" style="margin-top:4px;">Sofort / nach Genehmigung</div>
+    <div class="section-title" style="margin-top:4px;">Vor ATZ-Beginn (bis 01.12.2026)</div>
     <div class="card">
-      <div class="todo-item">
+      <div class="todo-item done-item">
         <div class="todo-check done"></div>
         <div class="todo-text"><strong>ATZ-Antrag genehmigt</strong><span>FK + HR · 15.07.2026 ✓</span></div>
       </div>
-      <div class="todo-item">
-        <div class="todo-check"></div>
-        <div class="todo-text"><strong>ATZ-Vertrag prüfen und ablegen</strong><span>Kommt postalisch, spätestens 3 Wochen vor 01.12.2026</span></div>
+      <div class="todo-item done-item">
+        <div class="todo-check done"></div>
+        <div class="todo-text"><strong>ATZ-Vertrag unterschrieben</strong><span>Eingang von HR am 07.10.2026 bestätigt, Ablage in ePersA ✓</span></div>
+      </div>
+      <div class="todo-item done-item">
+        <div class="todo-check done"></div>
+        <div class="todo-text">
+          <strong>Benefit Budget neu verteilen</strong>
+          <span>Entfällt: LAZKO-Guthaben nur 20 €, unerheblich (07.10.2026) ✓</span>
+        </div>
       </div>
       <div class="todo-item">
         <div class="todo-check"></div>
         <div class="todo-text">
-          <strong>Benefit Budget neu verteilen</strong>
-          <span>Im Benefit-Portal: Durch LAZKO-Wegfall freiwerdendes Budget neu verteilen (sonst → automatisch bAV)</span>
-          <span class="todo-date">📅 Nach Genehmigung / vor 01.12.2026</span>
+          <strong>TPF-Bruttoentgeltumwandlung (338 €/Monat) prüfen</strong>
+          <span>In der ATZ sinken Regelarbeitsentgelt und Entgeltumwandlung; Auswirkung auf Aufstockung, Netto und TPF-Prognose mit HR klären</span>
+          <span class="todo-date">📅 Vor 01.12.2026</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>HR-Systemeintrag abwarten</strong>
+          <span>HR hinterlegt die ATZ frühestens 6 Wochen vor Beginn; danach weitere HR-Informationen beachten</span>
+          <span class="todo-date">📅 Ab 20.10.2026</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Krankenkasse (TKK) über ATZ-Beginn informieren</strong>
+          <span>Freiwillig versichert: prüfen, ob Meldung nötig ist und wie sich Beiträge in Arbeits- und Freistellungsphase ändern (eigener Hinweis)</span>
+          <span class="todo-date">📅 Vor 01.12.2026</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Steuererklärung wegen Progressionsvorbehalt klären</strong>
+          <span>Steuerfreie Aufstockung unterliegt dem Progressionsvorbehalt (§ 32b EStG): Pflichtveranlagung und ggf. Vorauszahlungen mit Steuerberatung klären (eigener Hinweis)</span>
+          <span class="todo-date">📅 Vor 01.12.2026</span>
         </div>
       </div>
       <div class="todo-item">
@@ -589,9 +652,17 @@
       <div class="todo-item">
         <div class="todo-check"></div>
         <div class="todo-text">
-          <strong>Clerical Medical: Modellrechnung anfordern</strong>
-          <span>Für Rentenbeginn 01.12.2034 / 01.10.2035 (bisher nur 01.04.2036). Vertragsänderung beantragt.</span>
+          <strong>Clerical Medical: Rückfrage zur Modellrechnung</strong>
+          <span>Modellrechnung vom 01.07.2026 gilt für Rentenbeginn 01.04.2034 (angefordert: 01.12.2034 / 01.10.2035). Außerdem Ursache klären, warum der Umrechnungsfaktor von 126,36 auf 121,35 € je 100.000 € gesunken ist. Vertragsänderung beantragt.</span>
           <span class="todo-date">📅 Ausstehend</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Mit dem Banker eine langfristig tragfähige Kapitalplanung erarbeiten</strong>
+          <span>Gespräche laufen. Planwert 2.300 €/Monat und 82.800 € Tagesgeldpuffer; Entnahmerate 2035 ca. 4,39 % (über der 4%-Regel). Zu klären: tragfähiger Entnahmebetrag, Aufbau und Struktur der Anlage, Puffer, Reihenfolge der Entnahmen inkl. Kapitalkontenplan 01/2035.</span>
+          <span class="todo-date">📅 Laufend · Priorität hoch</span>
         </div>
       </div>
       <div class="todo-item">
@@ -606,18 +677,18 @@
 
     <div class="section-title">Bis Beginn Ausgleichsphase (12/2030)</div>
     <div class="card">
-      <div class="todo-item">
-        <div class="todo-check"></div>
+      <div class="todo-item done-item">
+        <div class="todo-check done"></div>
         <div class="todo-text">
-          <strong>LAZKO-Zeitguthaben vollständig abbauen</strong>
-          <span>Kein Übertrag in passive Phase möglich. Abstimmung mit Matthias Willert</span>
+          <strong>LAZKO-Zeitguthaben abbauen</strong>
+          <span>Entfällt: Guthaben nur 20 €, kein Planungsaufwand (07.10.2026) ✓</span>
         </div>
       </div>
       <div class="todo-item">
         <div class="todo-check"></div>
         <div class="todo-text">
-          <strong>Langzeitkonto-Zeitguthaben abbauen</strong>
-          <span>Ebenfalls mit Matthias Willert abstimmen</span>
+          <strong>Langzeitkonto-Zeitguthaben prüfen und ggf. abbauen</strong>
+          <span>Keine weiteren Einbringungen ab ATZ-Beginn; bei Guthaben mit Matthias Willert abstimmen</span>
         </div>
       </div>
       <div class="todo-item">
@@ -632,6 +703,21 @@
 
     <div class="section-title">Zu Beginn Ausgleichsphase (12/2030)</div>
     <div class="card">
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Geräte und Unterlagen zurückgeben (ATZ-Vertrag § 9)</strong>
+          <span>Ausweis, Zugangskarten, Schlüssel, Mobiltelefon, PC, Laptop, Datenträger, Konzernunterlagen; Rückgabestelle vorher erfragen</span>
+          <span class="todo-date">📅 30.11.2030</span>
+        </div>
+      </div>
+      <div class="todo-item">
+        <div class="todo-check"></div>
+        <div class="todo-text">
+          <strong>Personalservice-Registrierung</strong>
+          <span>Personalportal-Zugriff entfällt; Registrierung unter personalservice.telekom.com erst nach Eintritt in die Passivphase möglich. FAQ ATZ und Kontaktdaten vorher sichern</span>
+        </div>
+      </div>
       <div class="todo-item">
         <div class="todo-check"></div>
         <div class="todo-text">
@@ -714,6 +800,8 @@
         <div class="row"><span>Steuerklasse</span><span class="val">III · EV · NRW</span></div>
         <div class="row"><span>KV</span><span class="val">Freiwillig TKK</span></div>
         <div class="row"><span>ATZ-Genehmigung</span><span class="val">15.07.2026 (FK + HR)</span></div>
+        <div class="row"><span>ATZ-Vertrag</span><span class="val">Unterschrieben · Eingang 07.10.2026 von HR bestätigt</span></div>
+        <div class="row"><span>Vertragsarbeitgeber</span><span class="val">Deutsche Telekom Business Services &amp; Solutions GmbH</span></div>
       </div>
     </details>
 
@@ -774,13 +862,14 @@
         <div class="row"><span>Vertragsbeginn</span><span class="val">01.04.2007</span></div>
         <div class="row"><span>Beitragsfrei seit</span><span class="val">Ende 2017</span></div>
         <div class="row"><span>Gesamtbeiträge</span><span class="val">60.000 €</span></div>
-        <div class="row"><span>Rente Basis (3 %, Option 100 %)</span><span class="val">541 €/Monat</span></div>
-        <div class="row"><span>Rente konservativ (0 % Wachstum)</span><span class="val">144 €/Monat</span></div>
-        <div class="row"><span>Rente optimistisch (4,5 %)</span><span class="val">623 €/Monat</span></div>
+        <div class="row"><span>Rente Basis (3 %, Option 100 %)</span><span class="val">486 €/Monat</span></div>
+        <div class="row"><span>Rente konservativ (Garantieminimum)</span><span class="val">140 €/Monat</span></div>
+        <div class="row"><span>Rente optimistisch (4,5 %)</span><span class="val">544 €/Monat</span></div>
+        <div class="row"><span>Modellrechnung</span><span class="val">01.07.2026 · Rentenbeginn 01.04.2034</span></div>
         <div class="row"><span>Vertragsablauf laut Vertrag</span><span class="val">01.04.2036 (Änderung auf 12/2034 beantragt)</span></div>
         <div class="alert alert-warn" style="margin-top:8px;">
           <strong>⚠️ Aktion</strong>
-          Modellrechnung für 01.12.2034 / 01.10.2035 noch ausstehend!
+          Modellrechnung für 01.12.2034 / 01.10.2035 noch offen; vorliegende Berechnung gilt für 01.04.2034 (Rückfrage läuft).
         </div>
       </div>
     </details>
@@ -838,15 +927,15 @@
       <div class="contact">
         <div class="contact-icon">💼</div>
         <div class="contact-info">
-          <strong>Matthias Willert (Freistellung LAZKO / Langzeitkonto)</strong>
-          <span>Abstimmung LAZKO- und Langzeitkonto-Abbau bis 30.11.2030</span>
+          <strong>Matthias Willert (Freistellung Langzeitkonto)</strong>
+          <span>Abstimmung Langzeitkonto-Abbau bis 30.11.2030 (LAZKO nur 20 €, unkritisch)</span>
         </div>
       </div>
       <div class="contact">
         <div class="contact-icon">🏦</div>
         <div class="contact-info">
           <strong>Clerical Medical / Heidelberger Leben</strong>
-          <span>Modellrechnung für 12/2034 anfordern · Vertragsänderung beantragt</span>
+          <span>Rückfrage Modellrechnung 12/2034 offen (erhalten: 01.04.2034) · Vertragsänderung beantragt</span>
         </div>
       </div>
     </div>
@@ -858,6 +947,7 @@
         <div class="row"><span>BMF-Steuerrechner 2026</span></div>
         <p style="font-size:12px;color:var(--dk2);word-break:break-all;padding:4px 0;">http://www.bmf-steuerrechner.de/interface/2026Version1.xhtml?code=LSt2026ext&LZZ=2&RE4=1139266&STKL=3&R=1&KRV=0&PKV=0&PVZ=1</p>
         <div class="row"><span>ATZ-Antrag Auftragsnummer</span><span class="val">HRDE-1005499916</span></div>
+        <div class="row"><span>ATZ-Vertrag</span><span class="val">HRDE-1005499916 · 22.09.2026</span></div>
         <div class="row"><span>DRV-Vorausberechnung</span><span class="val">13.07.2026</span></div>
         <div class="row"><span>ATZ-Prognose (maßgeblich)</span><span class="val">29.06.2026 · HRDE-1005457279_00313912</span></div>
         <div class="row"><span>Kapitalkontenplan (Stand)</span><span class="val">28.06.2026</span></div>
@@ -897,7 +987,7 @@
         <p style="font-size:13px;color:#444;line-height:1.5;">Wirtschaftlich: Man arbeitet 4 Jahre voll und bekommt 8 Jahre lang dasselbe Gehalt. Die Aufstockung sorgt dafür, dass das Netto auf ≥ 78 % des Referenznettos aufgefüllt wird.</p>
         <div class="alert alert-warn" style="margin-top:10px;">
           <strong>⚠️ Gesetzgebung</strong>
-          Bundesregierung plant Abschaffung des Blockmodells. Da der ATZ-Antrag am 15.07.2026 genehmigt wurde, ist diese Planung geschützt.
+          Bundesregierung plant Abschaffung des Blockmodells. Da der ATZ-Antrag am 15.07.2026 genehmigt und der Vertrag unterschrieben wurde, ist diese Planung geschützt.
         </div>
       </div>
     </details>
@@ -1047,7 +1137,7 @@
           <tr><td>Freizeit</td><td>4 Jahre am Stück</td><td>Jeden Tag Hälfte frei</td></tr>
           <tr><td>Rentenrechtl. Beitrag</td><td>⚠️ Nur auf ATZ-Gehalt</td><td>Nur auf ATZ-Gehalt</td></tr>
           <tr><td>Empfehlung Rentenkomm.</td><td>❌ Abschaffen</td><td>✓ Bevorzugt</td></tr>
-          <tr><td>Unser Schutz</td><td>✅ Genehmigt 15.07.2026</td><td>–</td></tr>
+          <tr><td>Unser Schutz</td><td>✅ Genehmigt 15.07.2026, Vertrag unterschrieben</td><td>–</td></tr>
         </table>
         </div>
         <p style="font-size:12px;color:var(--muted);margin-top:6px;">Die Rentenkommission (BMAS, Juni 2026) empfiehlt Abschaffung des Blockmodells. Für diese Planung irrelevant – Antrag bereits genehmigt.</p>
@@ -1055,7 +1145,7 @@
     </details>
 
     <details>
-      <summary>� Regelaltersgrenze: Anhebung nach 2031 (Empfehlung 5)</summary>
+      <summary>📅 Regelaltersgrenze: Anhebung nach 2031 (Empfehlung 5)</summary>
       <div class="details-body">
         <p style="font-size:13px;color:#444;line-height:1.5;margin-bottom:8px;">Die Rentenkommission empfiehlt, die Regelaltersgrenze nach 2031 dynamisch an die Lebenserwartung zu koppeln – nicht pauschal, sondern per <strong>2:1-Formel</strong>: Pro Jahr gestiegener Lebenserwartung → 8 Monate länger arbeiten + 4 Monate längerer Rentenbezug.</p>
         <div class="tbl-wrap" style="margin-bottom:8px;">
@@ -1087,7 +1177,7 @@
     </details>
 
     <details>
-      <summary>�🔢 Wichtige Formeln auf einen Blick</summary>
+      <summary>🔢 Wichtige Formeln auf einen Blick</summary>
       <div class="details-body">
         <div class="formula">DRV_netto = DRV_brutto × f_DRV (0,84)</div>
         <div class="formula">bAV_netto = bAV_brutto × f_bAV (0,70)</div>
@@ -1220,20 +1310,20 @@ const scenarios = {
   K: {
     title: 'Konservativ (f_DRV 0,78 | f_bAV 0,62 | f_KAP 0,72)',
     drv: '2.419,56 €', bav: '1.105,76 €', kap: '1.656,00 €',
-    ruerup: '112,32 €', riester: '97,50 €',
-    total: '5.293,64 €', totalR: '5.391,14 €'
+    ruerup: '109,20 €', riester: '97,50 €',
+    total: '5.290,52 €', totalR: '5.388,02 €'
   },
   B: {
     title: 'Basis (f_DRV 0,84 | f_bAV 0,70 | f_KAP 0,80)',
     drv: '2.605,68 €', bav: '1.248,44 €', kap: '1.840,00 €',
-    ruerup: '454,44 €', riester: '105,00 €',
-    total: '6.148,56 €', totalR: '6.253,56 €'
+    ruerup: '408,24 €', riester: '105,00 €',
+    total: '6.102,36 €', totalR: '6.207,36 €'
   },
   O: {
     title: 'Optimistisch (f_DRV 0,89 | f_bAV 0,77 | f_KAP 0,90)',
     drv: '2.760,78 €', bav: '1.373,29 €', kap: '2.070,00 €',
-    ruerup: '554,47 €', riester: '111,25 €',
-    total: '6.758,54 €', totalR: '6.869,79 €'
+    ruerup: '484,16 €', riester: '111,25 €',
+    total: '6.688,23 €', totalR: '6.799,48 €'
   }
 };
 
@@ -1251,6 +1341,48 @@ function setScenario(key) {
     t.classList.toggle('active', ['K','B','O'][i] === key);
   });
 }
+
+// ── Countdown: aktive ATZ-Phase 01.12.2026 00:00 bis 30.11.2030 23:59 (Passivphase ab 01.12.2030 00:00) ──
+(function () {
+  const START = new Date(2026, 11, 1, 0, 0, 0);   // Beginn aktive Phase
+  const END   = new Date(2030, 11, 1, 0, 0, 0);   // Beginn passive Phase
+  // Wanduhrzeit als UTC, damit Sommer-/Winterzeit die Tages- und Stundenzahl nicht verschiebt
+  const wall = d => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
+  const pad = n => String(n).padStart(2, '0');
+
+  function setBox(ms) {
+    const mins = Math.max(0, Math.floor(ms / 60000));
+    document.getElementById('cd-d').textContent = Math.floor(mins / 1440);
+    document.getElementById('cd-h').textContent = pad(Math.floor((mins % 1440) / 60));
+    document.getElementById('cd-m').textContent = pad(mins % 60);
+  }
+
+  function tick() {
+    const now = new Date();
+    const nowW = wall(now), startW = wall(START), endW = wall(END);
+    const label = document.getElementById('cd-label');
+    const sub = document.getElementById('cd-sub');
+    const fill = document.getElementById('cd-fill');
+    if (nowW < startW) {
+      label.textContent = 'Aktive ATZ-Phase startet in';
+      setBox(startW - nowW);
+      sub.textContent = 'Beginn 01.12.2026, 00:00 \u00b7 danach l\u00e4uft der Countdown bis zur passiven Phase am 01.12.2030.';
+      fill.style.width = '0%';
+    } else if (nowW < endW) {
+      label.textContent = 'Passive Phase beginnt in';
+      setBox(endW - nowW);
+      sub.textContent = 'Aktive Phase 01.12.2026, 00:00 bis 30.11.2030, 23:59 \u00b7 Freistellung ab 01.12.2030.';
+      fill.style.width = (((nowW - startW) / (endW - startW)) * 100).toFixed(1) + '%';
+    } else {
+      label.textContent = 'Passive Phase (Freistellung) l\u00e4uft';
+      setBox(0);
+      sub.textContent = 'Seit 01.12.2030 \u00b7 Ende der ATZ am 30.11.2034.';
+      fill.style.width = '100%';
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => { tick(); setInterval(tick, 1000); });
+})();
 
 // ── Service Worker (Offline-Support) ──
 if ('serviceWorker' in navigator) {
